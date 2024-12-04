@@ -1,0 +1,15 @@
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: isi-project_database
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Project_ISI_2024!"
+      MSSQL_PID: "Developer"
+    volumes:
+      - ProjectISI_Database:/var/opt/mssql
+
+volumes:
+  ProjectISI_Database:

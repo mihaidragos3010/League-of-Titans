@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: Project ISI
+
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;encrypt=false;trustServerCertificate=true
+    username: sa
+    password: Project_ISI_2024!
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServer2012Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.format_sql: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
