@@ -3,9 +3,9 @@ spring:
     name: Project ISI
 
   datasource:
-    url: jdbc:sqlserver://localhost:1433;encrypt=false;trustServerCertificate=true
-    username: sa
-    password: Project_ISI_2024!
+    url: jdbc:sqlserver://${DATABASE_IP:localhost}:${DATABASE_PORT:1433};trustServerCertificate=${DOES_SERVER_TRUST_DATABASE_CERTIFICATE:true}
+    username: ${DATABASE_USER:sa}
+    password: ${DATABASE_PASSWORD:Project_ISI_2024!}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
   jpa:
@@ -16,8 +16,16 @@ spring:
       hibernate.format_sql: true
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 logging:
   level:
-    root: INFO
+    root: ${LOG_LEVEL:INFO}
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true
+  swagger-ui.path: /swagger-ui.html
+
+
+
