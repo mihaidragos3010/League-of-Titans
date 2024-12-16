@@ -9,21 +9,21 @@ const App = () => {
 
   // Render content based on login state
   const renderContent = () => {
-    // if (!isLoggedIn) {
-    //   console.log("Rendering LoginRegisterForm");
-    //   return (
-    //     <LoginRegisterForm
-    //       onLogin={() => {
-    //         console.log("onLogin called!"); // Debug message
-    //         setIsLoggedIn(true); // Update login state
-    //       }}
-    //     />
-    //   );
-    // }
+    if (!isLoggedIn) {
+      console.log("Rendering LoginRegisterForm");
+      return (
+        <LoginRegisterForm
+          onLogin={() => {
+            console.log("onLogin called!"); // Debug message
+            setIsLoggedIn(true); // Update login state
+          }}
+        />
+      );
+    }
     return (
       <div style={{ padding: "20px" }}>
         {/* Tab Navigation */}
-        <div style={{ marginBottom: "20px" }}>
+        <div className="tab-navigation" style={{ marginBottom: "20px" }}>
           <button
             onClick={() => setActiveTab("locations")}
             style={{
@@ -52,6 +52,18 @@ const App = () => {
           >
             Schedule Match
           </button>
+        </div>
+        <div className="map-container">
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Search for locations..."
+              className="search-input"
+            />
+          </div>
+          <div className="map-placeholder">
+            <h3>Map Area</h3> {/* Replace this with the map implementation */}
+          </div>
         </div>
 
         {/* Tab Content */}
