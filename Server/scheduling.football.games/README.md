@@ -4,5 +4,5 @@ Build the server and database
 
 Delete the server and database
     
-    socker-compose down --volumes
+    docker-compose down --volumes
 
