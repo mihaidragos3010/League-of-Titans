@@ -2,6 +2,7 @@ package com.proiect.isi.scheduling.football.games.controllers;
 
 import com.proiect.isi.scheduling.football.games.dto.LocationDto;
 import com.proiect.isi.scheduling.football.games.dto.TeamDto;
+import com.proiect.isi.scheduling.football.games.entities.Player;
 import com.proiect.isi.scheduling.football.games.services.TeamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,4 +49,10 @@ public class TeamController {
                 .status(HttpStatus.OK)
                 .build();
     }
+
+//    @PostMapping("/teams")
+//    public ResponseEntity<?> addPlayerToTeam(@RequestParam UUID teamId, @RequestParam UUID playerId){
+//
+//
+//    }
 }

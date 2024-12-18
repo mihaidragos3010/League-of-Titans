@@ -13,25 +13,25 @@ services:
     volumes:
       - ProjectISI_Database:/var/opt/mssql
 
-#  server:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#
-#    depends_on:
-#      - database
-#
-#    ports:
-#      - "8080:8080"
-#
-#    environment:
-#      SERVER_PORT: 8080
-#      DATABASE_IP: database
-#      DATABASE_PORT: 1433
-#      DATABASE_ADMIN_USER: sa
-#      DATABASE_PASSWORD: Project_ISI_2024!
-#      DOES_SERVER_TRUST_DATABASE_CERTIFICATE: true
-#      LOG_LEVEL: INFO
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    depends_on:
+      - database
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SERVER_PORT: 8080
+      DATABASE_IP: database
+      DATABASE_PORT: 1433
+      DATABASE_ADMIN_USER: sa
+      DATABASE_PASSWORD: Project_ISI_2024!
+      DOES_SERVER_TRUST_DATABASE_CERTIFICATE: true
+      LOG_LEVEL: INFO
 
 
 volumes:
