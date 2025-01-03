@@ -9,9 +9,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,11 +38,40 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
+    public List<MatchDto> getMatchesByDateRange(Optional<Date> startDate, Optional<Date> endDate){
+
+        List<Match> matches = new ArrayList<>();
+
+        if(startDate.isPresent() && endDate.isEmpty()){
+            matches = matchRepository.findByStartDate(convertToLondonTimeDate(startDate.get()));
+        }
+
+        if(startDate.isEmpty() && endDate.isPresent()){
+            matches = matchRepository.findByEndDate(convertToLondonTimeDate(endDate.get()));
+        }
+
+        if(startDate.isPresent() && endDate.isPresent()){
+            matches = matchRepository.findMatchesWithinRange(convertToLondonTimeDate(startDate.get()),
+                                                        convertToLondonTimeDate(endDate.get()));
+        }
+
+        return matches.stream()
+                .map(matchMapper::convertMatchToMatchDto)
+                .collect(Collectors.toList());
+    }
+
     public void deleteMatch(UUID id){
         Match match = matchRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Match not found with id: " + id));
 
         matchRepository.delete(match);
+    }
+
+    public Date convertToLondonTimeDate(Date date){
+        ZonedDateTime londonTime = ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of("Europe/London"));
+        Date londonDate = Date.from(londonTime.toInstant());
+
+        return londonDate;
     }
 
 }
