@@ -20,9 +20,8 @@ server:
 
 logging:
   level:
-    root: ${LOG_LEVEL:INFO}
+    root: INFO
+#    org.springframework.security: DEBUG
+#    org.springframework.web: DEBUG
+#    org.springframework: DEBUG
 
-springdoc:
-  api-docs.enabled: true
-  swagger-ui.enabled: true
-  swagger-ui.path: /swagger-ui.html

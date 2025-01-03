@@ -10,5 +10,7 @@ public interface PlayerMapper {
 
     @Mapping(target = "rank", constant = "Bronze")
     @Mapping(target = "points", constant = "0L")
-    public Player convertPlayerDtoToPlayer(PlayerDto playerDto);
+    Player convertPlayerDtoToPlayer(PlayerDto playerDto);
+
+    PlayerDto convertPlayerToPlayerDto(Player player);
 }

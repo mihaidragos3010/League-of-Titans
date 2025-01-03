@@ -19,33 +19,33 @@ public class PlayerController {
 
     private final PlayerService playerService;
 
-    @PostMapping("/players")
-    public ResponseEntity<?> postPlayer(@Valid @RequestBody PlayerDto playerDto){
+    @GetMapping("/players")
+    public ResponseEntity<?> getPlayers(@CookieValue(name = "AuthToken") String cookie){
 
-        playerService.addPlayer(playerDto);
+        if(cookie.equals("Admin")) {
+            List<Player> players = playerService.getAllPlayers();
 
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(players);
+        }
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.UNAUTHORIZED)
                 .build();
     }
 
-    @GetMapping("/players")
-    public ResponseEntity<?> getPlayers(){
-
-        List<Player> players = playerService.getAllPlayers();
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(players);
-    }
-
     @DeleteMapping("/players/{playerId}")
-    public ResponseEntity<?> postPlayer(@PathVariable UUID playerId){
+    public ResponseEntity<?> postPlayer(@PathVariable UUID playerId, @CookieValue(name = "AuthToken") String cookie){
 
-        playerService.deletePlayer(playerId);
+        if(cookie.equals("Admin")) {
+            playerService.deletePlayer(playerId);
 
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .build();
+        }
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.UNAUTHORIZED)
                 .build();
     }
 }

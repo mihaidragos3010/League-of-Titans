@@ -21,32 +21,47 @@ public class TeamController {
     private final TeamService teamService;
 
     @PostMapping("/teams")
-    public ResponseEntity<?> postTeam(@Valid @RequestBody TeamDto teamDto){
+    public ResponseEntity<?> postTeam(@Valid @RequestBody TeamDto teamDto, @CookieValue(name = "AuthToken") String cookie){
 
-        UUID locationId = teamService.addTeam(teamDto);
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            UUID locationId = teamService.addTeam(teamDto);
 
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(locationId);
+        }
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(locationId);
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
     }
 
     @GetMapping("/teams")
-    public ResponseEntity<?> getAllTeams(){
+    public ResponseEntity<?> getAllTeams(@CookieValue(name = "AuthToken") String cookie){
 
-        List<TeamDto> teams = teamService.getAllTeams();
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            List<TeamDto> teams = teamService.getAllTeams();
 
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(teams);
+        }
         return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(teams);
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
     }
 
     @DeleteMapping("/teams")
-    public ResponseEntity<?> deleteTeam(@RequestParam UUID id){
+    public ResponseEntity<?> deleteTeam(@RequestParam UUID id, @CookieValue(name = "AuthToken") String cookie){
 
-        teamService.deleteTeam(id);
+        if(cookie.equals("Admin")) {
+            teamService.deleteTeam(id);
 
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .build();
+        }
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.UNAUTHORIZED)
                 .build();
     }
 
