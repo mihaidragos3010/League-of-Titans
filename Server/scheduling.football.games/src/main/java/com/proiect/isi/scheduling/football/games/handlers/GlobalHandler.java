@@ -15,4 +15,13 @@ public class GlobalHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleSQLServerException(Exception ex) {
+        // Return a meaningful message and status
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("A database error occurred: " + ex.getMessage());
+    }
+
 }

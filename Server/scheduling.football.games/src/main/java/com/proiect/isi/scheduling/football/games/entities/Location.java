@@ -20,10 +20,10 @@ public class Location {
     @Column(unique = true)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Double latitude;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private Double longitude;
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
