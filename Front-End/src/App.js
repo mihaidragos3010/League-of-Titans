@@ -134,61 +134,70 @@ const App = () => {
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
           height: "100vh",
           margin: 0,
         }}
       >
+        {/* Left Side: Content and Tabs */}
         <div
-          className="tab-navigation"
-          style={{ display: "flex", padding: "10px", background: "#f8f9fa" }}
+          style={{
+            flex: "1",
+            display: "flex",
+            flexDirection: "column",
+            borderRight: "2px solid #ddd",
+            background: "#fff",
+          }}
         >
-          <button
-            onClick={() => setActiveTab("locations")}
-            style={{
-              padding: "10px 20px",
-              marginRight: "10px",
-              backgroundColor:
-                activeTab === "locations" ? "#007BFF" : "#f0f0f0",
-              color: activeTab === "locations" ? "#fff" : "#000",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: "4px",
-            }}
-          >
-            Location List
-          </button>
-          <button
-            onClick={() => setActiveTab("schedule")}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: activeTab === "schedule" ? "#007BFF" : "#f0f0f0",
-              color: activeTab === "schedule" ? "#fff" : "#000",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: "4px",
-            }}
-          >
-            Schedule Match
-          </button>
-        </div>
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+          {/* Horizontal Tabs */}
           <div
+            className="tab-navigation"
             style={{
-              flex: "1",
-              overflowY: "auto",
-              padding: "10px",
-              background: "#fff",
-              borderRight: "1px solid #ddd",
+              display: "flex",
+              justifyContent: "space-around",
+              alignItems: "center",
+              background: "#007BFF",
+              padding: "10px 0",
+              borderBottom: "2px solid #0056b3",
             }}
           >
+            {[
+              { key: "locations", label: "Location List" },
+              { key: "matches", label: "Matches List" },
+              { key: "schedule", label: "Schedule Match" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor:
+                    activeTab === tab.key ? "#0056b3" : "#007BFF",
+                  color: "#fff",
+                  fontSize: "16px",
+                  fontWeight: activeTab === tab.key ? "bold" : "normal",
+                  border: "none",
+                  cursor: "pointer",
+                  borderRadius: "0",
+                  transition: "background-color 0.3s ease",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
             {activeTab === "locations" && (
               <LocationList onLocationsFetched={handleLocationsFetched} />
             )}
+            {activeTab === "matches" && <MatchesList />}
             {activeTab === "schedule" && <ScheduleMatch />}
           </div>
-          <div ref={mapRef} style={{ flex: "2", height: "100%" }}></div>
         </div>
+
+        {/* Right Side: Map */}
+        <div ref={mapRef} style={{ flex: "2", height: "100%" }}></div>
       </div>
     );
   };
