@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 
-const ScheduleMatch = () => {
+const ScheduleMatch = ({ locationId }) => {
   const [team1, setTeam1] = useState("");
   const [team2, setTeam2] = useState("");
   const [date, setDate] = useState("");
-  const [locationId, setLocationId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -37,8 +36,7 @@ const ScheduleMatch = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Schedule a Match</h1>
+    <div>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Team 1:</label>
@@ -72,8 +70,8 @@ const ScheduleMatch = () => {
           <input
             type="text"
             value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-            required
+            readOnly
+            style={{ backgroundColor: "#f0f0f0" }} // Indicate it's read-only
           />
         </div>
         <button type="submit">Schedule Match</button>

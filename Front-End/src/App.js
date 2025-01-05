@@ -18,6 +18,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState("locations");
   const mapRef = useRef(null);
   const graphicsLayerRef = useRef(null);
+  const tabLineRef = useRef(null); // Add reference for the tab line
 
   const createSquareGraphic = (centerPoint, color, size = 0.001) => {
     const { longitude, latitude } = centerPoint;
@@ -150,6 +151,7 @@ const App = () => {
         >
           {/* Horizontal Tabs */}
           <div
+            ref={tabLineRef} // Attach the ref to the tab line
             className="tab-navigation"
             style={{
               display: "flex",
@@ -189,7 +191,10 @@ const App = () => {
           {/* Tab Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
             {activeTab === "locations" && (
-              <LocationList onLocationsFetched={handleLocationsFetched} />
+              <LocationList
+                onLocationsFetched={handleLocationsFetched}
+                tabLineRef={tabLineRef} // Pass the tabLineRef to LocationList
+              />
             )}
             {activeTab === "matches" && <MatchesList />}
             {activeTab === "schedule" && <ScheduleMatch />}
