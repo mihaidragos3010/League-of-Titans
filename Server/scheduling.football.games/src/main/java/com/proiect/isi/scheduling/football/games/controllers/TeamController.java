@@ -35,6 +35,25 @@ public class TeamController {
                 .build();
     }
 
+    @PostMapping("/teams/join/{teamId}")
+    public ResponseEntity<?> joinPlayerATeam(@PathVariable UUID teamId,
+                                             @RequestParam UUID playerId,
+                                             @CookieValue(name = "AuthToken") String cookie){
+
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            teamService.addPlayerToTeam(teamId, playerId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .build();
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
+    }
+
+
     @GetMapping("/teams")
     public ResponseEntity<?> getAllTeams(@CookieValue(name = "AuthToken") String cookie){
 

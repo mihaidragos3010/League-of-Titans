@@ -1,6 +1,7 @@
 package com.proiect.isi.scheduling.football.games.handlers;
 
 import com.proiect.isi.scheduling.football.games.exceptions.UnknownPlayerException;
+import com.proiect.isi.scheduling.football.games.exceptions.UnknownTeamOrPlayerException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,13 @@ public class GlobalHandler {
 
     @ExceptionHandler(UnknownPlayerException.class)
     public ResponseEntity<String> handleUnknownPlayerException(UnknownPlayerException ex) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(UnknownTeamOrPlayerException.class)
+    public ResponseEntity<String> handleUnknownPlayerException(UnknownTeamOrPlayerException ex) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());

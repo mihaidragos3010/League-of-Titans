@@ -1,7 +1,6 @@
 package com.proiect.isi.scheduling.football.games.services;
 
 import com.proiect.isi.scheduling.football.games.dto.MatchDto;
-import com.proiect.isi.scheduling.football.games.entities.Location;
 import com.proiect.isi.scheduling.football.games.entities.Match;
 import com.proiect.isi.scheduling.football.games.mapper.MatchMapper;
 import com.proiect.isi.scheduling.football.games.repositories.MatchRepository;
