@@ -19,6 +19,9 @@ public class Match {
     private UUID id;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private Date startDate;
 
     @Column(nullable = false)

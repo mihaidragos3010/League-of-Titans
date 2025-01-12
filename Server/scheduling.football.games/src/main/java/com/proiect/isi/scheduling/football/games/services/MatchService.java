@@ -38,6 +38,12 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
+    public List<MatchDto> getMatchesByLocationId(UUID locationId){
+        return matchRepository.findByLocationId(locationId).stream()
+                .map(matchMapper::convertMatchToMatchDto)
+                .collect(Collectors.toList());
+    }
+
     public List<MatchDto> getMatchesByDateRange(Optional<Date> startDate, Optional<Date> endDate){
 
         List<Match> matches = new ArrayList<>();

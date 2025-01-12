@@ -1,5 +1,7 @@
 package com.proiect.isi.scheduling.football.games.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.proiect.isi.scheduling.football.games.entities.Rank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Email;
 import lombok.Data;
@@ -15,6 +17,11 @@ public class PlayerDto {
     private String email;
 
     @NotEmpty
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String password;
+
+    private Rank rank;
+
+    private String description;
 
 }

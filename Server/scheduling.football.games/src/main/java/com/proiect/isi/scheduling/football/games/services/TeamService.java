@@ -34,6 +34,12 @@ public class TeamService {
                 .collect(Collectors.toList());
     }
 
+    public List<TeamDto> getTeamsByMatchId(UUID matchId){
+        return teamRepository.findByMatchId(matchId).stream()
+                .map(teamMapper::convertTeamToTeamDto)
+                .collect(Collectors.toList());
+    }
+
     public void deleteTeam(UUID id){
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Team not found with id: " + id));

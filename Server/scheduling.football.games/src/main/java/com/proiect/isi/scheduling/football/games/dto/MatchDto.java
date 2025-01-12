@@ -1,6 +1,7 @@
 package com.proiect.isi.scheduling.football.games.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -11,6 +12,9 @@ import java.util.UUID;
 public class MatchDto {
 
     private UUID id;
+
+    @NotEmpty
+    private String name;
 
     @NotNull
     private UUID locationId;

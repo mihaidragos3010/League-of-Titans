@@ -34,6 +34,23 @@ public class PlayerController {
                 .build();
     }
 
+    @GetMapping("/players/{playerId}")
+    public ResponseEntity<?> getPlayers(@PathVariable UUID playerId,
+                                        @CookieValue(name = "AuthToken") String cookie){
+
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            PlayerDto player = playerService.getPlayerById(playerId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(player);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
+    }
+
     @DeleteMapping("/players/{playerId}")
     public ResponseEntity<?> postPlayer(@PathVariable UUID playerId, @CookieValue(name = "AuthToken") String cookie){
 

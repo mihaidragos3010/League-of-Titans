@@ -14,6 +14,9 @@ public class LocationDto {
     @NotEmpty
     private String name;
 
+    @NotEmpty
+    private String address;
+
     @NotNull
     private Double latitude;
 

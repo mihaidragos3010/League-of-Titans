@@ -12,5 +12,6 @@ public interface PlayerMapper {
     @Mapping(target = "points", constant = "0L")
     Player convertPlayerDtoToPlayer(PlayerDto playerDto);
 
+    @Mapping(target = "password", expression = "java(null)")
     PlayerDto convertPlayerToPlayerDto(Player player);
 }

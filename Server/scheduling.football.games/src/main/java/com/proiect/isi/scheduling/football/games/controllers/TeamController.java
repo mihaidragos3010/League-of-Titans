@@ -50,6 +50,22 @@ public class TeamController {
                 .build();
     }
 
+    @GetMapping("/teams/{matchId}")
+    public ResponseEntity<?> getAllTeams(@PathVariable UUID matchId,
+                                        @CookieValue(name = "AuthToken") String cookie){
+
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            List<TeamDto> teams = teamService.getTeamsByMatchId(matchId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(teams);
+        }
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
+    }
+
     @DeleteMapping("/teams")
     public ResponseEntity<?> deleteTeam(@RequestParam UUID id, @CookieValue(name = "AuthToken") String cookie){
 

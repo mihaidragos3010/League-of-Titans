@@ -61,6 +61,22 @@ public class MatchController {
                 .build();
     }
 
+    @GetMapping("/matches/{locationdId}")
+    public ResponseEntity<?> getMatchesByLocationId(@PathVariable UUID locationdId,
+                                                    @CookieValue(name = "AuthToken") String cookie){
+
+        if(cookie.equals("Admin") || cookie.equals("Player")) {
+            List<MatchDto> matches = matchService.getMatchesByLocationId(locationdId);
+
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(matches);
+        }
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
+    }
+
 
     @DeleteMapping("/matches")
     public ResponseEntity<?> deleteMatch(@RequestParam UUID id, @CookieValue(name = "AuthToken") String cookie){

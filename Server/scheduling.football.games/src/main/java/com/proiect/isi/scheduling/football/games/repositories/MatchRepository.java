@@ -13,6 +13,8 @@ import java.util.UUID;
 @Repository
 public interface MatchRepository extends JpaRepository<Match, UUID> {
 
+    List<Match> findByLocationId(UUID locationId);
+
     @Query("SELECT m FROM Match m WHERE m.startDate = :startDate")
     List<Match> findByStartDate(@Param("startDate") Date startDate);
 

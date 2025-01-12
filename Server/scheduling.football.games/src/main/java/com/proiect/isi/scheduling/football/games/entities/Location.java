@@ -20,6 +20,9 @@ public class Location {
     @Column(unique = true)
     private String name;
 
+    @Column(unique = true)
+    private String address;
+
     @Column(nullable = false, unique = true)
     private Double latitude;
 
