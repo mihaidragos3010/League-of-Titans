@@ -1,0 +1,49 @@
+/* Beautify DatePicker Input */
+.custom-datepicker input {
+  width: 200px;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s;
+}
+
+.custom-datepicker input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Customize Calendar Pop-up */
+.react-datepicker {
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+}
+
+.react-datepicker__header {
+  background-color: #007bff;
+  color: white;
+  border-bottom: 1px solid #ccc;
+  border-radius: 8px 8px 0 0;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day,
+.react-datepicker__time-name {
+  color: #333;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.react-datepicker__day--selected {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+}
+
+.react-datepicker__day:hover {
+  background-color: #e9ecef;
+  border-radius: 50%;
+}
