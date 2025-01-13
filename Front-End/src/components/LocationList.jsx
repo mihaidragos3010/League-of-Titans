@@ -16,6 +16,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
         const response = await fetch("http://localhost:8080/api/locations", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -48,6 +49,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         }
       );
 

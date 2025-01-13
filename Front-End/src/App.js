@@ -14,11 +14,28 @@ import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
 import "@arcgis/core/assets/esri/themes/light/main.css";
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    Boolean(localStorage.getItem("user"))
+  );
   const [activeTab, setActiveTab] = useState("locations");
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user")) || null
+  );
   const mapRef = useRef(null);
   const graphicsLayerRef = useRef(null);
   const tabLineRef = useRef(null); // Add reference for the tab line
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+    localStorage.setItem("user", JSON.stringify(userData)); // Save user to local storage
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsLoggedIn(false);
+    localStorage.removeItem("user"); // Remove user from local storage
+  };
 
   const createSquareGraphic = (centerPoint, color, size = 0.001) => {
     const { longitude, latitude } = centerPoint;
@@ -111,9 +128,8 @@ const App = () => {
   const handleLocationsFetched = (locations) => {
     if (graphicsLayerRef.current) {
       locations.forEach((location) => {
-        // Swap latitude and longitude
-        const longitude = parseFloat(location.latitude); // Longitude should take latitude's value
-        const latitude = parseFloat(location.longitude); // Latitude should take longitude's value
+        const longitude = parseFloat(location.latitude);
+        const latitude = parseFloat(location.longitude);
 
         if (!isNaN(longitude) && !isNaN(latitude)) {
           const pointGraphic = createPointGraphic(longitude, latitude);
@@ -129,17 +145,10 @@ const App = () => {
 
   const renderContent = () => {
     if (!isLoggedIn) {
-      return <LoginRegisterForm onLogin={() => setIsLoggedIn(true)} />;
+      return <LoginRegisterForm onLogin={handleLogin} />;
     }
     return (
-      <div
-        style={{
-          display: "flex",
-          height: "100vh",
-          margin: 0,
-        }}
-      >
-        {/* Left Side: Content and Tabs */}
+      <div style={{ display: "flex", height: "100vh", margin: 0 }}>
         <div
           style={{
             flex: "1",
@@ -149,17 +158,38 @@ const App = () => {
             background: "#fff",
           }}
         >
-          {/* Horizontal Tabs */}
+          <header
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "10px",
+              background: "#f8f9fa",
+            }}
+          >
+            <h1>Welcome, {user?.name || "User"}</h1>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "10px",
+                background: "#007BFF",
+                color: "#fff",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Logout
+            </button>
+          </header>
           <div
-            ref={tabLineRef} // Attach the ref to the tab line
+            ref={tabLineRef}
             className="tab-navigation"
             style={{
               display: "flex",
               justifyContent: "space-around",
-              alignItems: "center",
               background: "#007BFF",
               padding: "10px 0",
-              borderBottom: "2px solid #0056b3",
             }}
           >
             {[
@@ -175,33 +205,25 @@ const App = () => {
                   backgroundColor:
                     activeTab === tab.key ? "#0056b3" : "#007BFF",
                   color: "#fff",
-                  fontSize: "16px",
-                  fontWeight: activeTab === tab.key ? "bold" : "normal",
                   border: "none",
                   cursor: "pointer",
-                  borderRadius: "0",
-                  transition: "background-color 0.3s ease",
                 }}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-
-          {/* Tab Content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
             {activeTab === "locations" && (
               <LocationList
                 onLocationsFetched={handleLocationsFetched}
-                tabLineRef={tabLineRef} // Pass the tabLineRef to LocationList
+                tabLineRef={tabLineRef}
               />
             )}
             {activeTab === "matches" && <MatchesList />}
             {activeTab === "schedule" && <ScheduleMatch />}
           </div>
         </div>
-
-        {/* Right Side: Map */}
         <div ref={mapRef} style={{ flex: "2", height: "100%" }}></div>
       </div>
     );
