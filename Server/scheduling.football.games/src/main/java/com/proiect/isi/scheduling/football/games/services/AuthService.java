@@ -7,6 +7,7 @@ import com.proiect.isi.scheduling.football.games.mapper.PlayerMapper;
 import com.proiect.isi.scheduling.football.games.repositories.PlayerRepository;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -30,19 +31,26 @@ public class AuthService {
         return Optional.empty();
     }
 
-    public Cookie createAndSaveAdminCookie(){
-        Cookie cookie = new Cookie("AuthToken", "Admin");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
+    public ResponseCookie createAndSaveAdminCookie(){
+
+        ResponseCookie cookie = ResponseCookie.from("AuthToken", "Admin")
+                .httpOnly(true)
+                .secure(false) // Use true if using HTTPS
+                .sameSite("None") // Required for cross-site cookies
+                .path("/")
+                .build();
+
         return cookie;
     }
 
-    public Cookie createAndSavePlayerCookie(){
-        Cookie cookie = new Cookie("AuthToken", "Player");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
+    public ResponseCookie createAndSavePlayerCookie(){
+        ResponseCookie cookie = ResponseCookie.from("AuthToken", "Admin")
+                .httpOnly(true)
+                .secure(false) // Use true if using HTTPS
+                .sameSite("None") // Required for cross-site cookies
+                .path("/")
+                .build();
+
         return cookie;
     }
 
