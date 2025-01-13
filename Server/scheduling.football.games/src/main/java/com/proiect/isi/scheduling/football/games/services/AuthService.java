@@ -35,8 +35,7 @@ public class AuthService {
 
         ResponseCookie cookie = ResponseCookie.from("AuthToken", "Admin")
                 .httpOnly(true)
-                .secure(false) // Use true if using HTTPS
-                .sameSite("None") // Required for cross-site cookies
+                .secure(false)
                 .path("/")
                 .build();
 
@@ -46,8 +45,7 @@ public class AuthService {
     public ResponseCookie createAndSavePlayerCookie(){
         ResponseCookie cookie = ResponseCookie.from("AuthToken", "Admin")
                 .httpOnly(true)
-                .secure(false) // Use true if using HTTPS
-                .sameSite("None") // Required for cross-site cookies
+                .secure(false)
                 .path("/")
                 .build();
 
