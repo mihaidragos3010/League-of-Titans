@@ -3,12 +3,15 @@ package com.proiect.isi.scheduling.football.games.entities;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import jakarta.persistence.UniqueConstraint;
 
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Locations")
+@Table(name = "Locations", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"latitude", "longitude"})
+})
 @Getter
 @Setter
 public class Location {
@@ -23,14 +26,13 @@ public class Location {
     @Column(unique = true)
     private String address;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Double latitude;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Double longitude;
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Match> matches;
-
 
 }
