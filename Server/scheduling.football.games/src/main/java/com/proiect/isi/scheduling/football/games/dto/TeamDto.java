@@ -1,5 +1,6 @@
 package com.proiect.isi.scheduling.football.games.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -13,8 +14,9 @@ public class TeamDto {
     @NotNull
     private UUID matchId;
 
-    private Integer minPlayers;
+    private Integer minPlayers = 0;
 
+    @NotNull
     private Integer maxPlayers;
 
 }

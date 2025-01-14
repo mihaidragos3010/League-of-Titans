@@ -1,6 +1,7 @@
 package com.proiect.isi.scheduling.football.games.services;
 
 import com.proiect.isi.scheduling.football.games.dto.MatchDto;
+import com.proiect.isi.scheduling.football.games.dto.TeamDto;
 import com.proiect.isi.scheduling.football.games.entities.Match;
 import com.proiect.isi.scheduling.football.games.mapper.MatchMapper;
 import com.proiect.isi.scheduling.football.games.repositories.MatchRepository;
@@ -19,6 +20,8 @@ public class MatchService {
 
     private final MatchRepository matchRepository;
     private final MatchMapper matchMapper;
+    private final TeamService teamService;
+    private final PlayerService playerService;
 
     public UUID addMatch(MatchDto matchDto){
         Match match = matchMapper.convertMatchDtoToMatch(matchDto);
@@ -79,4 +82,31 @@ public class MatchService {
         return londonDate;
     }
 
+
+    public List<Map<String, Object>> createProperResponse(List<MatchDto> matches){
+        List<Map<String,Object>> response = new ArrayList<>();
+
+        for(MatchDto matchDto : matches){
+            Map<String, Object> field = new HashMap<>();
+
+            try {
+                TeamDto teamDto1 = teamService.getTeamsByMatchId(matchDto.getId()).get(0);
+                Integer countTeam1Players = playerService.getPlayerByTeamId(teamDto1.getId()).size();
+
+                TeamDto teamDto2 = teamService.getTeamsByMatchId(matchDto.getId()).get(1);
+                Integer countTeam2Players = playerService.getPlayerByTeamId(teamDto2.getId()).size();
+
+                field.put("match", matchDto);
+                field.put("team1", teamDto1);
+                field.put("team2", teamDto2);
+                field.put("nr_team1_players", countTeam1Players);
+                field.put("nr_team2_players", countTeam2Players);
+                response.add(field);
+            }catch (ArrayIndexOutOfBoundsException ex){
+                field.put("ERROR", "Match " + matchDto.getId() + " have too less teams inserted!");
+            }
+        }
+
+        return response;
+    }
 }

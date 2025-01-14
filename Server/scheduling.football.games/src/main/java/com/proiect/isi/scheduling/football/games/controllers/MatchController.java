@@ -1,9 +1,13 @@
 package com.proiect.isi.scheduling.football.games.controllers;
 
 import com.proiect.isi.scheduling.football.games.dto.MatchDto;
+import com.proiect.isi.scheduling.football.games.dto.TeamDto;
 import com.proiect.isi.scheduling.football.games.services.MatchService;
+import com.proiect.isi.scheduling.football.games.services.PlayerService;
+import com.proiect.isi.scheduling.football.games.services.TeamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,9 +54,11 @@ public class MatchController {
                 matches = matchService.getMatchesByDateRange(startDate, endDate);
             }
 
+            List<Map<String, Object>> response = matchService.createProperResponse(matches);
+
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(matches);
+                    .body(response);
         }
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -66,9 +72,11 @@ public class MatchController {
         if(cookie.equals("Admin") || cookie.equals("Player")) {
             List<MatchDto> matches = matchService.getMatchesByLocationId(locationdId);
 
+            List<Map<String, Object>> response = matchService.createProperResponse(matches);
+
             return ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(matches);
+                    .body(response);
         }
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)

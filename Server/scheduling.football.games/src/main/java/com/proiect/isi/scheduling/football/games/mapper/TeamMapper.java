@@ -10,11 +10,13 @@ import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.UUID;
 import com.proiect.isi.scheduling.football.games.entities.Match;
+import org.springframework.context.annotation.Lazy;
 
 @Mapper(componentModel = "spring")
 public abstract class TeamMapper {
 
     @Autowired
+    @Lazy
     private MatchService matchService;
 
     @Mapping(target = "match", source = "matchId", qualifiedByName = "mapMatchIdToMatch")

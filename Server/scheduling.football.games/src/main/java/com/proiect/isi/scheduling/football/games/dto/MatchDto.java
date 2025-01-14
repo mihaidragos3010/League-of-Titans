@@ -27,7 +27,7 @@ public class MatchDto {
     @NotNull
     private Date endDate;
 
-    private Integer minTeams;
+    private Integer minTeams = 2;
 
-    private Integer maxTeams;
+    private Integer maxTeams = 2;
 }
