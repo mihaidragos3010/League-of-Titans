@@ -102,8 +102,9 @@ public class MatchService {
                 field.put("nr_team1_players", countTeam1Players);
                 field.put("nr_team2_players", countTeam2Players);
                 response.add(field);
-            }catch (ArrayIndexOutOfBoundsException ex){
+            }catch (Exception ex){
                 field.put("ERROR", "Match " + matchDto.getId() + " have too less teams inserted!");
+                response.add(field);
             }
         }
 
