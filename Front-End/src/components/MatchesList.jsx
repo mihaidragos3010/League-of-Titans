@@ -9,8 +9,7 @@ const MatchesList = ({ filterLocationId }) => {
   const [error, setError] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [locationId, setLocationId] = useState("");
-  const [showFilters, setShowFilters] = useState(false); // Track if filter box is visible
+  const [locationId, setLocationId] = useState(filterLocationId || ""); // Initialize with filterLocationId
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -25,32 +24,26 @@ const MatchesList = ({ filterLocationId }) => {
         }
         const data = await response.json();
 
-        // Filter matches by location_id if provided
-        const filteredData = filterLocationId
-          ? data.filter(
-              (match) => match.locationId.toString() === filterLocationId
-            )
-          : data;
-
-        setMatches(filteredData);
-        setFilteredMatches(filteredData); // Initially show all matches
+        setMatches(data);
+        setFilteredMatches(data); // Initially display all matches
       } catch (err) {
+        console.error("Fetch error:", err);
         setError("Failed to fetch matches. Please try again later.");
       }
     };
 
     fetchMatches();
-  }, [filterLocationId]);
+  }, []);
 
-  // Function to filter matches based on provided criteria
-  const filterMatches = () => {
+  const applyFilters = () => {
     const filtered = matches.filter((match) => {
-      const matchStart = new Date(match.startDate);
-      const matchEnd = new Date(match.endDate);
+      const matchStart = new Date(match.match.startDate);
+      const matchEnd = new Date(match.match.endDate);
 
-      const matchesLocation = locationId
-        ? match.locationId.toString() === locationId.trim()
-        : true;
+      const matchesLocation =
+        locationId.trim() !== ""
+          ? match.match.locationId.toString() === locationId.trim()
+          : true;
       const afterStartDate = startDate ? matchStart >= startDate : true;
       const beforeEndDate = endDate ? matchEnd <= endDate : true;
 
@@ -65,89 +58,78 @@ const MatchesList = ({ filterLocationId }) => {
       <h1>Matches List</h1>
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* Show/Hide Filters */}
-      <button
-        onClick={() => setShowFilters(!showFilters)}
-        style={{
-          padding: "10px 20px",
-          marginBottom: "20px",
-          backgroundColor: "#007BFF",
-          color: "#fff",
-          border: "none",
-          cursor: "pointer",
-          borderRadius: "4px",
-        }}
-      >
-        {showFilters ? "Hide Filters" : "Show Filters"}
-      </button>
-
-      {/* Filter Selection Box */}
-      {showFilters && (
-        <div
+      <div style={{ marginBottom: "20px" }}>
+        <label>Filter by Location ID:</label>
+        <input
+          type="text"
+          value={locationId}
+          onChange={(e) => setLocationId(e.target.value)}
+          placeholder="Enter Location ID"
+          style={{ marginLeft: "10px", padding: "5px" }}
+        />
+        <div style={{ marginTop: "10px" }}>
+          <label>Start Date:</label>
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            isClearable
+            placeholderText="Select start date"
+            dateFormat="yyyy-MM-dd"
+          />
+        </div>
+        <div style={{ marginTop: "10px" }}>
+          <label>End Date:</label>
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            isClearable
+            placeholderText="Select end date"
+            dateFormat="yyyy-MM-dd"
+          />
+        </div>
+        <button
+          onClick={applyFilters}
           style={{
-            marginBottom: "20px",
-            padding: "10px",
-            border: "1px solid #ccc",
+            marginTop: "10px",
+            padding: "10px 20px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
             borderRadius: "4px",
-            backgroundColor: "#f9f9f9",
           }}
         >
-          <div style={{ marginBottom: "10px" }}>
-            <label>Filter by Location ID:</label>
-            <input
-              type="text"
-              value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
-              placeholder="Enter Location ID"
-              style={{ marginLeft: "10px", padding: "5px" }}
-            />
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <label>Start Date:</label>
-            <DatePicker
-              selected={startDate}
-              onChange={(date) => setStartDate(date)}
-              isClearable
-              placeholderText="Select start date"
-              dateFormat="yyyy-MM-dd"
-              style={{ marginLeft: "10px" }}
-            />
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            <label>End Date:</label>
-            <DatePicker
-              selected={endDate}
-              onChange={(date) => setEndDate(date)}
-              isClearable
-              placeholderText="Select end date"
-              dateFormat="yyyy-MM-dd"
-              style={{ marginLeft: "10px" }}
-            />
-          </div>
-          <button
-            onClick={filterMatches}
+          Apply Filters
+        </button>
+      </div>
+
+      <ul style={{ listStyleType: "none", padding: 0 }}>
+        {filteredMatches.map((match) => (
+          <li
+            key={match.match.id}
             style={{
-              padding: "10px 20px",
-              backgroundColor: "#28A745",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
+              padding: "10px",
+              marginBottom: "10px",
+              border: "1px solid #ddd",
               borderRadius: "4px",
+              backgroundColor: "#f9f9f9",
             }}
           >
-            Apply Filters
-          </button>
-        </div>
-      )}
-
-      {/* Matches List */}
-      <ul>
-        {filteredMatches.map((match) => (
-          <li key={match.id}>
-            <strong>{match.id}</strong>
-            <p>Location ID: {match.locationId}</p>
-            <p>Start Date: {match.startDate}</p>
-            <p>End Date: {match.endDate}</p>
+            <strong>Match Name:</strong> {match.match.name}
+            <p>
+              <strong>Start Date:</strong> {match.match.startDate}
+            </p>
+            <p>
+              <strong>End Date:</strong> {match.match.endDate}
+            </p>
+            <p>
+              <strong>Team 1 Spots Left:</strong>{" "}
+              {match.team1.maxPlayers - match.nr_team1_players}
+            </p>
+            <p>
+              <strong>Team 2 Spots Left:</strong>{" "}
+              {match.team2.maxPlayers - match.nr_team2_players}
+            </p>
           </li>
         ))}
       </ul>

@@ -62,12 +62,12 @@ const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
       // Filter matches to include only those after the current time
       const now = new Date();
       const upcomingMatches = data.filter(
-        (match) => new Date(match.startDate) > now
+        (match) => new Date(match.match.startDate) > now
       );
 
       // Sort matches in chronological order
       upcomingMatches.sort(
-        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+        (a, b) => new Date(a.match.startDate) - new Date(b.match.startDate)
       );
 
       // Limit to the latest 3 matches
@@ -198,7 +198,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
             {matches.length > 0 ? (
               matches.map((match) => (
                 <li
-                  key={match.id}
+                  key={match.match.id}
                   style={{
                     padding: "8px",
                     marginBottom: "8px",
@@ -206,12 +206,22 @@ const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
                   }}
                 >
                   <strong style={{ margin: "3px 0" }}>
-                    Match name: {match.name}
+                    Match name: {match.match.name}
                   </strong>
                   <p style={{ margin: "3px 0" }}>
-                    Start Date: {match.startDate}
+                    Start Date: {match.match.startDate}
                   </p>
-                  <p style={{ margin: "3px 0" }}>End Date: {match.endDate}</p>
+                  <p style={{ margin: "3px 0" }}>
+                    End Date: {match.match.endDate}
+                  </p>
+                  <p style={{ margin: "3px 0" }}>
+                    Team 1 Spots Left:{" "}
+                    {match.team1.maxPlayers - match.nr_team1_players}
+                  </p>
+                  <p style={{ margin: "3px 0" }}>
+                    Team 2 Spots Left:{" "}
+                    {match.team2.maxPlayers - match.nr_team2_players}
+                  </p>
                 </li>
               ))
             ) : (
