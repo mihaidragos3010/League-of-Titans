@@ -45,7 +45,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
     // Fetch matches for the selected location
     try {
       const response = await fetch(
-        `http://localhost:8080/api/matches?locationId=${location.id}`,
+        `http://localhost:8080/api/matches/${location.id}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -58,19 +58,31 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
       }
 
       const data = await response.json(); // Await the JSON response
-      setMatches(data); // Set the matches state
+
+      // Filter matches to include only those after the current time
+      const now = new Date();
+      const upcomingMatches = data.filter(
+        (match) => new Date(match.startDate) > now
+      );
+
+      // Sort matches in chronological order
+      upcomingMatches.sort(
+        (a, b) => new Date(a.startDate) - new Date(b.startDate)
+      );
+
+      // Limit to the latest 3 matches
+      setMatches(upcomingMatches.slice(0, 3));
     } catch (err) {
       console.error("Fetch error for matches:", err);
       setMatches([]); // Clear matches if there’s an error
     }
 
-    if (listRef.current && tabLineRef?.current) {
-      const listRect = listRef.current.getBoundingClientRect();
+    if (tabLineRef?.current) {
       const tabLineRect = tabLineRef.current.getBoundingClientRect();
 
       setPopupPosition({
-        top: tabLineRect.bottom, // Position below the tab line with some spacing
-        left: listRect.right + 10, // Position next to the locations list
+        top: tabLineRect.bottom + 10, // Slightly below the tab line
+        left: tabLineRect.right, // Align with the tab line
       });
     }
   };
@@ -121,13 +133,14 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
       </div>
 
       {/* Popup: Location Details and Schedule Form */}
-      {selectedLocation && (
+      {showScheduleForm && (
         <div
           style={{
             position: "absolute",
-            top: `${popupPosition.top}px`, // Dynamic vertical position
-            left: `${popupPosition.left}px`, // Dynamic horizontal position
-            width: "300px", // Fixed width for the popup
+            top: `${popupPosition.top}px`,
+            left: `${popupPosition.left}px`,
+            width: "300px",
+            maxWidth: "calc(100vw - 20px)",
             background: "#fff",
             border: "1px solid #ddd",
             borderRadius: "8px",
@@ -151,43 +164,13 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
           >
             ✖
           </button>
-          <h2 style={{ marginBottom: "8px" }}>
-            {selectedLocation.name} Details
-          </h2>
-          <p style={{ margin: "5px 0" }}>
-            Latitude: {selectedLocation.latitude}
-          </p>
-          <p style={{ margin: "5px 0" }}>
-            Longitude: {selectedLocation.longitude}
-          </p>
-          <p style={{ margin: "5px 0" }}>ID: {selectedLocation.id}</p>
-
-          <button
-            onClick={handleScheduleButtonClick}
-            style={{
-              padding: "8px 16px",
-              margin: "8px 0",
-              backgroundColor: "#007BFF",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: "4px",
-            }}
-          >
-            Schedule Game
-          </button>
-
-          {showScheduleForm && (
-            <div style={{ marginTop: "10px" }}>
-              <h3 style={{ marginBottom: "8px" }}>Schedule a Game</h3>
-              <ScheduleMatch locationId={selectedLocation.id} />
-            </div>
-          )}
+          <h3>Schedule a Game</h3>
+          <ScheduleMatch locationId={selectedLocation.id} />
         </div>
       )}
 
       {/* Matches List */}
-      {selectedLocation && matches.length > 0 && (
+      {selectedLocation && (
         <div
           style={{
             flex: "1",
@@ -197,23 +180,56 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
             background: "#f9f9f9",
           }}
         >
+          {/* Location Details */}
+          <div style={{ marginBottom: "20px" }}>
+            <h2>{selectedLocation.name} Details</h2>
+            <p>Latitude: {selectedLocation.latitude}</p>
+            <p>Longitude: {selectedLocation.longitude}</p>
+            <p>ID: {selectedLocation.id}</p>
+          </div>
+
+          {/* Matches */}
           <h2>Matches at {selectedLocation.name}</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-            {matches.map((match) => (
-              <li
-                key={match.id}
-                style={{
-                  padding: "8px",
-                  marginBottom: "8px",
-                  borderBottom: "1px solid #ddd",
-                }}
-              >
-                <p>Start Date: {match.startDate}</p>
-                <p>End Date: {match.endDate}</p>
-                <p>Location ID: {match.locationId}</p>
-              </li>
-            ))}
+            {matches.length > 0 ? (
+              matches.map((match) => (
+                <li
+                  key={match.id}
+                  style={{
+                    padding: "8px",
+                    marginBottom: "8px",
+                    borderBottom: "1px solid #ddd",
+                  }}
+                >
+                  <strong style={{ margin: "3px 0" }}>
+                    Match name: {match.name}
+                  </strong>
+                  <p style={{ margin: "3px 0" }}>
+                    Start Date: {match.startDate}
+                  </p>
+                  <p style={{ margin: "3px 0" }}>End Date: {match.endDate}</p>
+                </li>
+              ))
+            ) : (
+              <p>No upcoming matches available.</p>
+            )}
           </ul>
+
+          {/* Schedule Game Button */}
+          <button
+            onClick={handleScheduleButtonClick}
+            style={{
+              padding: "8px 16px",
+              margin: "10px 0",
+              backgroundColor: "#007BFF",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "4px",
+            }}
+          >
+            Schedule Game
+          </button>
         </div>
       )}
     </div>
