@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 
 const ScheduleMatch = ({ locationId }) => {
-  const [team1, setTeam1] = useState("");
-  const [team2, setTeam2] = useState("");
-  const [date, setDate] = useState("");
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -13,23 +13,46 @@ const ScheduleMatch = ({ locationId }) => {
     setError("");
 
     try {
-      const response = await fetch("/matches", {
+      // Step 1: Create the match
+      const matchResponse = await fetch("localhost:8080/api/matches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          team1,
-          team2,
-          date,
           locationId,
+          name,
+          startDate,
+          endDate,
         }),
+        credentials: "include", // Allow cookies
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to schedule the match.");
+      if (!matchResponse.ok) {
+        const matchError = await matchResponse.text();
+        throw new Error(matchError || "Failed to schedule the match.");
       }
 
-      setMessage("Match scheduled successfully!");
+      const matchId = await matchResponse.text(); // Match ID is returned as plain text
+
+      // Step 2: Create the required number of teams for the match
+      const teamPromises = Array.from({ length: 2 }).map(() => {
+        return fetch("localhost:8080/api/teams", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchId,
+            maxPlayers: 10, // Example value, can be adjusted
+          }),
+        });
+      });
+
+      const teamResponses = await Promise.all(teamPromises);
+      const failedTeams = teamResponses.filter((response) => !response.ok);
+
+      if (failedTeams.length > 0) {
+        throw new Error("Failed to create all teams for the match.");
+      }
+
+      setMessage("Match and teams scheduled successfully!");
     } catch (err) {
       setError(err.message || "An unexpected error occurred.");
     }
@@ -39,29 +62,29 @@ const ScheduleMatch = ({ locationId }) => {
     <div>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Team 1:</label>
+          <label>Match Name:</label>
           <input
             type="text"
-            value={team1}
-            onChange={(e) => setTeam1(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
           />
         </div>
         <div>
-          <label>Team 2:</label>
-          <input
-            type="text"
-            value={team2}
-            onChange={(e) => setTeam2(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Date:</label>
+          <label>Start Date:</label>
           <input
             type="datetime-local"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label>End Date:</label>
+          <input
+            type="datetime-local"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
             required
           />
         </div>
