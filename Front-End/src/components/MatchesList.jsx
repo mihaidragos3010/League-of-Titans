@@ -3,130 +3,156 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Import DatePicker styles
 import "./MatchesList.css"; // Import custom styles
 
-const MatchesList = () => {
-    const [matches, setMatches] = useState([]);
-    const [filteredMatches, setFilteredMatches] = useState([]);
-    const [error, setError] = useState("");
-    const [startDate, setStartDate] = useState(null); // For filtering after a start date
-    const [endDate, setEndDate] = useState(null); // For filtering before an end date
+const MatchesList = ({ filterLocationId }) => {
+  const [matches, setMatches] = useState([]);
+  const [filteredMatches, setFilteredMatches] = useState([]);
+  const [error, setError] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [locationId, setLocationId] = useState("");
+  const [showFilters, setShowFilters] = useState(false); // Track if filter box is visible
 
-    useEffect(() => {
-        // Fetch locations from the API using fetch
-        const fetchMatches = async () => {
-            try {
-                const response = await fetch("http://localhost:8080/api/matches",
-                    {
-                        method: "GET",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include",
-                    });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                setMatches(data);
-                setFilteredMatches(data); // Initially show all matches
-            } catch (err) {
-                setError("Failed to fetch matches. Please try again later.");
-            }
-        };
-
-        fetchMatches();
-    }, []);
-
-    // Function to filter matches based on provided dates
-    const filterMatches = () => {
-        if (!startDate && !endDate) {
-            // If no dates are selected, show all matches
-            setFilteredMatches(matches);
-            return;
-        }
-
-        const filtered = matches.filter((match) => {
-            const matchStart = new Date(match.startDate);
-            const matchEnd = new Date(match.endDate);
-
-            // Conditions for filtering
-            const afterStartDate = startDate ? matchStart >= startDate : true;
-            const beforeEndDate = endDate ? matchEnd <= endDate : true;
-
-            return afterStartDate && beforeEndDate;
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/matches", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
 
-        setFilteredMatches(filtered);
+        // Filter matches by location_id if provided
+        const filteredData = filterLocationId
+          ? data.filter(
+              (match) => match.locationId.toString() === filterLocationId
+            )
+          : data;
+
+        setMatches(filteredData);
+        setFilteredMatches(filteredData); // Initially show all matches
+      } catch (err) {
+        setError("Failed to fetch matches. Please try again later.");
+      }
     };
 
-    return (
-        <div style={{ padding: "20px" }}>
-            <h1>Matches List</h1>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+    fetchMatches();
+  }, [filterLocationId]);
 
-            {/* Date Filters */}
-            <div style={{ marginBottom: "20px", display: "flex", gap: "20px" }}>
-                <div>
-                    <label>Start Date:</label>
-                    <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        isClearable
-                        placeholderText="Select start date"
-                        dateFormat="yyyy-MM-dd"
-                    />
-                </div>
-                <div>
-                    <label>End Date:</label>
-                    <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        isClearable
-                        placeholderText="Select end date"
-                        dateFormat="yyyy-MM-dd"
-                    />
-                </div>
-                <button
-                    onClick={filterMatches}
-                    style={{
-                        padding: "10px 20px",
-                        backgroundColor: "#007BFF",
-                        color: "#fff",
-                        border: "none",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                    }}
-                >
-                    Filter
-                </button>
-            </div>
+  // Function to filter matches based on provided criteria
+  const filterMatches = () => {
+    const filtered = matches.filter((match) => {
+      const matchStart = new Date(match.startDate);
+      const matchEnd = new Date(match.endDate);
 
-            {/* Matches List */}
-            <ul>
-                {filteredMatches.map((match) => (
-                    <li key={match.id}>
-                        <strong>{match.id}</strong>
-                        <p>Location ID: {match.locationId}</p>
-                        <p>Start Date: {match.startDate}</p>
-                        <p>End Date: {match.endDate}</p>
-                    </li>
-                ))}
-            </ul>
+      const matchesLocation = locationId
+        ? match.locationId.toString() === locationId.trim()
+        : true;
+      const afterStartDate = startDate ? matchStart >= startDate : true;
+      const beforeEndDate = endDate ? matchEnd <= endDate : true;
+
+      return matchesLocation && afterStartDate && beforeEndDate;
+    });
+
+    setFilteredMatches(filtered);
+  };
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Matches List</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {/* Show/Hide Filters */}
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        style={{
+          padding: "10px 20px",
+          marginBottom: "20px",
+          backgroundColor: "#007BFF",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+          borderRadius: "4px",
+        }}
+      >
+        {showFilters ? "Hide Filters" : "Show Filters"}
+      </button>
+
+      {/* Filter Selection Box */}
+      {showFilters && (
+        <div
+          style={{
+            marginBottom: "20px",
+            padding: "10px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          <div style={{ marginBottom: "10px" }}>
+            <label>Filter by Location ID:</label>
+            <input
+              type="text"
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              placeholder="Enter Location ID"
+              style={{ marginLeft: "10px", padding: "5px" }}
+            />
+          </div>
+          <div style={{ marginBottom: "10px" }}>
+            <label>Start Date:</label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              isClearable
+              placeholderText="Select start date"
+              dateFormat="yyyy-MM-dd"
+              style={{ marginLeft: "10px" }}
+            />
+          </div>
+          <div style={{ marginBottom: "10px" }}>
+            <label>End Date:</label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              isClearable
+              placeholderText="Select end date"
+              dateFormat="yyyy-MM-dd"
+              style={{ marginLeft: "10px" }}
+            />
+          </div>
+          <button
+            onClick={filterMatches}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#28A745",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "4px",
+            }}
+          >
+            Apply Filters
+          </button>
         </div>
-    );
-    // return (
-    //   <div style={{ padding: "20px" }}>
-    //     <h1>Available Matches</h1>
-    //     {error && <p style={{ color: "red" }}>{error}</p>}
-    //     <ul>
-    //       {matches.map((matches) => (
-    //         <li key={matches.id}>
-    //           <strong>{matches.id}</strong>
-    //           <p>locationId: {matches.locationId}</p>
-    //           <p>startDate: {matches.startDate}</p>
-    //           <p>endDate: {matches.endDate}</p>
-    //         </li>
-    //       ))}
-    //     </ul>
-    //   </div>
-    // );
+      )}
+
+      {/* Matches List */}
+      <ul>
+        {filteredMatches.map((match) => (
+          <li key={match.id}>
+            <strong>{match.id}</strong>
+            <p>Location ID: {match.locationId}</p>
+            <p>Start Date: {match.startDate}</p>
+            <p>End Date: {match.endDate}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 };
 
 export default MatchesList;

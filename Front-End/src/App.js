@@ -339,9 +339,14 @@ const App = () => {
               <LocationList
                 onLocationsFetched={handleLocationsFetched}
                 tabLineRef={tabLineRef}
+                setActiveTab={setActiveTab} // Pass setActiveTab
               />
             )}
-            {activeTab === "matches" && <MatchesList />}
+            {activeTab === "matches" && (
+              <MatchesList
+                filterLocationId={localStorage.getItem("filterLocationId")} // Pass location_id from localStorage
+              />
+            )}
             {activeTab === "schedule" && <ScheduleMatch />}
           </div>
         </div>

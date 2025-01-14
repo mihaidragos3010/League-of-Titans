@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ScheduleMatch from "./ScheduleMatch";
 
-const LocationList = ({ onLocationsFetched, tabLineRef }) => {
+const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
   const [locations, setLocations] = useState([]);
   const [matches, setMatches] = useState([]); // Store matches for the selected location
   const [selectedLocation, setSelectedLocation] = useState(null); // Track selected location
@@ -110,7 +110,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
           boxSizing: "border-box",
         }}
       >
-        <h1 style={{ marginBottom: "10px" }}>Available Fields</h1>
+        <h2 style={{ marginBottom: "10px" }}>Available Fields</h2>
         {error && <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>}
         <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
           {locations.map((location) => (
@@ -182,14 +182,18 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
         >
           {/* Location Details */}
           <div style={{ marginBottom: "20px" }}>
-            <h2>{selectedLocation.name} Details</h2>
-            <p>Latitude: {selectedLocation.latitude}</p>
-            <p>Longitude: {selectedLocation.longitude}</p>
-            <p>ID: {selectedLocation.id}</p>
+            <h3>{selectedLocation.name} Details</h3>
+            <p style={{ margin: "3px 0" }}>
+              Latitude: {selectedLocation.latitude}
+            </p>
+            <p style={{ margin: "3px 0" }}>
+              Longitude: {selectedLocation.longitude}
+            </p>
+            <p style={{ margin: "3px 0" }}>ID: {selectedLocation.id}</p>
           </div>
 
           {/* Matches */}
-          <h2>Matches at {selectedLocation.name}</h2>
+          <h3>Matches at {selectedLocation.name}</h3>
           <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
             {matches.length > 0 ? (
               matches.map((match) => (
@@ -229,6 +233,25 @@ const LocationList = ({ onLocationsFetched, tabLineRef }) => {
             }}
           >
             Schedule Game
+          </button>
+
+          {/* Show All Matches Button */}
+          <button
+            onClick={() => {
+              setActiveTab("matches"); // Change the active tab to "matches"
+              localStorage.setItem("filterLocationId", selectedLocation.id); // Store the filter in localStorage
+            }}
+            style={{
+              padding: "8px 16px",
+              margin: "10px 0",
+              backgroundColor: "#FFC107",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "4px",
+            }}
+          >
+            Show All Matches
           </button>
         </div>
       )}
