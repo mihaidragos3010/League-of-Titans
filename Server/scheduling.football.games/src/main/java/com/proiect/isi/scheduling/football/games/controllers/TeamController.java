@@ -39,11 +39,10 @@ public class TeamController {
 
     @PostMapping("/teams/join/{teamId}")
     public ResponseEntity<?> joinPlayerATeam(@PathVariable UUID teamId,
-                                             @RequestParam UUID playerId,
                                              @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
-            teamService.addPlayerToTeam(teamId, playerId);
+        if(authService.checkPlayerCredentials(cookie)) {
+            teamService.addPlayerToTeam(teamId, UUID.fromString(cookie));
 
             return ResponseEntity
                     .status(HttpStatus.OK)
