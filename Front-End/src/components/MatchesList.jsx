@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Import DatePicker styles
 import "./MatchesList.css"; // Import custom styles
@@ -10,7 +10,9 @@ const MatchesList = ({ filterLocationId }) => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [locationId, setLocationId] = useState(filterLocationId || ""); // Initialize with filterLocationId
+  const [showFilters, setShowFilters] = useState(false);
 
+  // Fetch all matches
   useEffect(() => {
     const fetchMatches = async () => {
       try {
@@ -35,7 +37,8 @@ const MatchesList = ({ filterLocationId }) => {
     fetchMatches();
   }, []);
 
-  const applyFilters = () => {
+  // Memoized applyFilters function
+  const applyFilters = useCallback(() => {
     const filtered = matches.filter((match) => {
       const matchStart = new Date(match.match.startDate);
       const matchEnd = new Date(match.match.endDate);
@@ -51,57 +54,88 @@ const MatchesList = ({ filterLocationId }) => {
     });
 
     setFilteredMatches(filtered);
-  };
+  }, [matches, locationId, startDate, endDate]);
+
+  // Automatically update locationId and apply filters when filterLocationId changes
+  useEffect(() => {
+    if (filterLocationId) {
+      setLocationId(filterLocationId); // Set locationId from filterLocationId
+    }
+  }, [filterLocationId]);
+
+  // Automatically apply filters when locationId changes (manual or automatic)
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Matches List</h1>
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <div style={{ marginBottom: "20px" }}>
-        <label>Filter by Location ID:</label>
-        <input
-          type="text"
-          value={locationId}
-          onChange={(e) => setLocationId(e.target.value)}
-          placeholder="Enter Location ID"
-          style={{ marginLeft: "10px", padding: "5px" }}
-        />
-        <div style={{ marginTop: "10px" }}>
-          <label>Start Date:</label>
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            isClearable
-            placeholderText="Select start date"
-            dateFormat="yyyy-MM-dd"
+      {/* Show/Hide Filters */}
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        style={{
+          padding: "10px 20px",
+          marginBottom: "20px",
+          backgroundColor: "#007BFF",
+          color: "#fff",
+          border: "none",
+          cursor: "pointer",
+          borderRadius: "4px",
+        }}
+      >
+        {showFilters ? "Hide Filters" : "Show Filters"}
+      </button>
+
+      {/* Filter Selection Box */}
+      {showFilters && (
+        <div style={{ marginBottom: "20px" }}>
+          <label>Filter by Location ID:</label>
+          <input
+            type="text"
+            value={locationId}
+            onChange={(e) => setLocationId(e.target.value)}
+            placeholder="Enter Location ID"
+            style={{ marginLeft: "10px", padding: "5px" }}
           />
+          <div style={{ marginTop: "10px" }}>
+            <label>Start Date:</label>
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              isClearable
+              placeholderText="Select start date"
+              dateFormat="yyyy-MM-dd"
+            />
+          </div>
+          <div style={{ marginTop: "10px" }}>
+            <label>End Date:</label>
+            <DatePicker
+              selected={endDate}
+              onChange={(date) => setEndDate(date)}
+              isClearable
+              placeholderText="Select end date"
+              dateFormat="yyyy-MM-dd"
+            />
+          </div>
+          <button
+            onClick={applyFilters}
+            style={{
+              marginTop: "10px",
+              padding: "10px 20px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "4px",
+            }}
+          >
+            Apply Filters
+          </button>
         </div>
-        <div style={{ marginTop: "10px" }}>
-          <label>End Date:</label>
-          <DatePicker
-            selected={endDate}
-            onChange={(date) => setEndDate(date)}
-            isClearable
-            placeholderText="Select end date"
-            dateFormat="yyyy-MM-dd"
-          />
-        </div>
-        <button
-          onClick={applyFilters}
-          style={{
-            marginTop: "10px",
-            padding: "10px 20px",
-            backgroundColor: "#28a745",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            borderRadius: "4px",
-          }}
-        >
-          Apply Filters
-        </button>
-      </div>
+      )}
 
       <ul style={{ listStyleType: "none", padding: 0 }}>
         {filteredMatches.map((match) => (
