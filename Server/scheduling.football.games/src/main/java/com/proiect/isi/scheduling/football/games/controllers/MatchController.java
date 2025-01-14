@@ -2,6 +2,7 @@ package com.proiect.isi.scheduling.football.games.controllers;
 
 import com.proiect.isi.scheduling.football.games.dto.MatchDto;
 import com.proiect.isi.scheduling.football.games.dto.TeamDto;
+import com.proiect.isi.scheduling.football.games.services.AuthService;
 import com.proiect.isi.scheduling.football.games.services.MatchService;
 import com.proiect.isi.scheduling.football.games.services.PlayerService;
 import com.proiect.isi.scheduling.football.games.services.TeamService;
@@ -21,11 +22,12 @@ import java.util.*;
 public class MatchController {
 
     private final MatchService matchService;
+    private final AuthService authService;
 
     @PostMapping("/matches")
     public ResponseEntity<?> postMatch(@Valid @RequestBody MatchDto MatchDto, @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             UUID matchId = matchService.addMatch(MatchDto);
 
             return ResponseEntity
@@ -44,7 +46,7 @@ public class MatchController {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Optional<Date> endDate,
             @CookieValue(name = "AuthToken") String cookie) {
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<MatchDto> matches = new ArrayList<>();
             if (startDate.isEmpty() && endDate.isEmpty()) {
                 matches = matchService.getAllMatches();
@@ -69,7 +71,7 @@ public class MatchController {
     public ResponseEntity<?> getMatchesByLocationId(@PathVariable UUID locationdId,
                                                     @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<MatchDto> matches = matchService.getMatchesByLocationId(locationdId);
 
             List<Map<String, Object>> response = matchService.createProperResponse(matches);

@@ -3,6 +3,7 @@ package com.proiect.isi.scheduling.football.games.controllers;
 import com.proiect.isi.scheduling.football.games.dto.LocationDto;
 import com.proiect.isi.scheduling.football.games.dto.TeamDto;
 import com.proiect.isi.scheduling.football.games.entities.Player;
+import com.proiect.isi.scheduling.football.games.services.AuthService;
 import com.proiect.isi.scheduling.football.games.services.TeamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,12 @@ import java.util.UUID;
 public class TeamController {
 
     private final TeamService teamService;
+    private final AuthService authService;
 
     @PostMapping("/teams")
     public ResponseEntity<?> postTeam(@Valid @RequestBody TeamDto teamDto, @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             UUID locationId = teamService.addTeam(teamDto);
 
             return ResponseEntity
@@ -40,7 +42,7 @@ public class TeamController {
                                              @RequestParam UUID playerId,
                                              @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             teamService.addPlayerToTeam(teamId, playerId);
 
             return ResponseEntity
@@ -57,7 +59,7 @@ public class TeamController {
     @GetMapping("/teams")
     public ResponseEntity<?> getAllTeams(@CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<TeamDto> teams = teamService.getAllTeams();
 
             return ResponseEntity
@@ -73,7 +75,7 @@ public class TeamController {
     public ResponseEntity<?> getAllTeams(@PathVariable UUID matchId,
                                         @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<TeamDto> teams = teamService.getTeamsByMatchId(matchId);
 
             return ResponseEntity

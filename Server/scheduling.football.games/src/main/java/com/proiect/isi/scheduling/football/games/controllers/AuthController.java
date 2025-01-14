@@ -37,7 +37,7 @@ public class AuthController {
 
         Optional<PlayerDto> playerDto = authService.getPlayerCredentials(authDto);
         if(playerDto.isPresent()){
-            ResponseCookie cookie = authService.createAndSavePlayerCookie();
+            ResponseCookie cookie = authService.createAndSavePlayerCookie(authDto);
             response.addHeader("Set-Cookie", cookie.toString());
             return ResponseEntity
                     .status(HttpStatus.OK)

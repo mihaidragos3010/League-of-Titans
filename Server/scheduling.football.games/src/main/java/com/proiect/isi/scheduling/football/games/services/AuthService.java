@@ -7,11 +7,14 @@ import com.proiect.isi.scheduling.football.games.mapper.PlayerMapper;
 import com.proiect.isi.scheduling.football.games.repositories.PlayerRepository;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -42,14 +45,33 @@ public class AuthService {
         return cookie;
     }
 
-    public ResponseCookie createAndSavePlayerCookie(){
-        ResponseCookie cookie = ResponseCookie.from("AuthToken", "Admin")
+    public ResponseCookie createAndSavePlayerCookie(AuthDto authDto){
+
+        Player player = playerRepository.findByUsernameAndPassword(
+                authDto.getUsername(),
+                authDto.getPassword()).get();
+
+        ResponseCookie cookie = ResponseCookie.from("AuthToken", player.getId().toString())
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .build();
 
         return cookie;
+    }
+
+    public boolean checkPlayerCredentials(String cookie){
+        try {
+            UUID playerId = UUID.fromString(cookie);
+            Optional<Player> player = playerRepository.findById(playerId);
+            if(player.isPresent()){
+                return true;
+            }
+        }catch (Exception e){
+            log.info("Cookie " + cookie + " is not in correctFormat");
+        }
+
+        return false;
     }
 
 }

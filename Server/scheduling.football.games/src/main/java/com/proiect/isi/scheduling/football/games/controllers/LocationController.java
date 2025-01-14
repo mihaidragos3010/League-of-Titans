@@ -41,7 +41,7 @@ public class LocationController {
     @GetMapping("/locations")
     public ResponseEntity<?> getLocations(@CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<LocationDto> locations = locationService.getAllLocations();
 
             return ResponseEntity

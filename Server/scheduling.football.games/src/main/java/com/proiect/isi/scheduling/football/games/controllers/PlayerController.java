@@ -2,6 +2,7 @@ package com.proiect.isi.scheduling.football.games.controllers;
 
 import com.proiect.isi.scheduling.football.games.dto.PlayerDto;
 import com.proiect.isi.scheduling.football.games.entities.Player;
+import com.proiect.isi.scheduling.football.games.services.AuthService;
 import com.proiect.isi.scheduling.football.games.services.PlayerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class PlayerController {
 
     private final PlayerService playerService;
+    private final AuthService authService;
 
     @GetMapping("/players")
     public ResponseEntity<?> getPlayers(@CookieValue(name = "AuthToken") String cookie){
@@ -38,7 +40,7 @@ public class PlayerController {
     public ResponseEntity<?> getPlayers(@PathVariable UUID playerId,
                                         @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             PlayerDto player = playerService.getPlayerById(playerId);
 
             return ResponseEntity
@@ -55,7 +57,7 @@ public class PlayerController {
     public ResponseEntity<?> getPlayersByTeamId(@PathVariable UUID teamId,
                                                 @CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || cookie.equals("Player")) {
+        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
             List<PlayerDto> players = playerService.getPlayerByTeamId(teamId);
 
             return ResponseEntity
