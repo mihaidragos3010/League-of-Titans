@@ -588,7 +588,7 @@ const App = () => {
                             background: "#f8f9fa",
                         }}
                     >
-                        <h1>Titan si prietenii</h1>
+                        <h1>League of titans</h1>
                         <button
                             onClick={handleLogout}
                             style={{
