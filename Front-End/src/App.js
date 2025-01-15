@@ -19,6 +19,8 @@ import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
 import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import Profile from "./components/Profile";
 
+import ReactDOM from "react-dom";
+
 import { fetchMatches, applyFilters } from "./components/MatchesList"; // Asigură-te că exporturile sunt disponibile
 
 import { OCCUPATION_STATUS_COLORS } from "./MapConstants";
@@ -56,11 +58,57 @@ const App = () => {
     const userLocationGraphicRef = useRef(null);
 
     const [locations, setLocations] = useState([]);
+    const [selectedLocation, setSelectedLocation] = useState(null);
+
+    const handlePointClick = (location) => {
+        setSelectedLocation(location);
+    };
+
 
     esriConfig.apiKey =
         "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h";
 
-    const createPointGraphic = (longitude, latitude, color = [255, 0, 0], outlineColor = [0, 0, 0], outlineWidth = 1.5) => {
+    const createBufferGraphic = (longitude, latitude, radius = 500, location = null) => {
+        const point = new Point({
+            longitude: longitude,
+            latitude: latitude,
+            spatialReference: { wkid: 4326 }, // WGS84
+        });
+
+        // Proiectează punctul în Web Mercator
+        const projectedPoint = project(point, new SpatialReference({ wkid: 3857 }));
+
+        if (!projectedPoint) {
+            console.error("Failed to project point for buffer:", point);
+            return null;
+        }
+
+        // Creează bufferul folosind punctul proiectat
+        const bufferGeometry = geometryEngine.buffer(projectedPoint, radius, "meters");
+
+        const bufferSymbol = new SimpleFillSymbol({
+            color: [255, 255, 255, 0], // Transparent
+            outline: {
+                color: [0, 0, 0, 0], // Fără contur
+                width: 0,
+            },
+        });
+
+        return new Graphic({
+            geometry: bufferGeometry,
+            symbol: bufferSymbol,
+            attributes: location, // Atributele locației pentru identificare
+        });
+    };
+
+
+
+    const createPointGraphic = (longitude, latitude, color = [255, 0, 0], outlineColor = [0, 0, 0], outlineWidth = 1.5, location = null) => {
+        if (!longitude || !latitude) {
+            console.error("Invalid coordinates for point graphic:", location);
+            return null;
+        }
+
         const point = new Point({
             longitude: longitude,
             latitude: latitude,
@@ -78,15 +126,18 @@ const App = () => {
         return new Graphic({
             geometry: point,
             symbol: symbol,
+            attributes: location, // Atributele locației pentru identificare
         });
     };
+
+
 
 
     // esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h"
 
     useEffect(() => {
         if (isLoggedIn && mapRef.current) {
-            console.log("Initializing map...");
+            //console.log("Initializing map...");
 
             const map = new Map({ basemap: "topo-vector" });
 
@@ -102,28 +153,56 @@ const App = () => {
             const graphicsLayer = new GraphicsLayer();
             graphicsLayerRef.current = graphicsLayer;
             map.add(graphicsLayer);
-            console.log("Graphics layer added to the map:", graphicsLayerRef.current);
+            //console.log("Graphics layer added to the map:", graphicsLayerRef.current);
 
-            console.log("MapView created. Adding GraphicsLayer.");
+            //console.log("MapView created. Adding GraphicsLayer.");
 
             view.ui.components = view.ui.components.filter(
                 (component) => component !== "zoom"
             );
 
-            console.log("Removed default zoom controls.");
+            //console.log("Removed default zoom controls.");
+
+            // Listener pentru click-uri pe hartă
+            view.on("click", async (event) => {
+                try {
+                    const response = await view.hitTest(event);
+
+                    if (response.results.length > 0) {
+                        const graphic = response.results.find(
+                            (result) => result.graphic.layer === graphicsLayerRef.current
+                        )?.graphic;
+
+                        if (graphic) {
+                            const location = graphic.attributes;
+
+                            // Evită modificările redundante ale stării
+                            if (selectedLocation?.id !== location.id) {
+                                //console.log("Clicked location:", location);
+                                setSelectedLocation(location);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error during hitTest or click handling:", error);
+                }
+            });
+
+
+
 
             // Urmărește locația utilizatorului
             const stopTracking = trackUserLocation(graphicsLayer);
 
-            console.log("Started tracking user location.");
+            //console.log("Started tracking user location.");
 
             return () => {
                 stopTracking();
                 view.destroy();
-                console.log("Cleaned up MapView.");
+                //console.log("Cleaned up MapView.");
             };
         } else {
-            console.log("Map initialization skipped or map already initialized.");
+            //console.log("Map initialization skipped or map already initialized.");
         }
     }, [isLoggedIn]);
 
@@ -185,8 +264,15 @@ const App = () => {
                 }
             }
 
-            const pointGraphic = createPointGraphic(longitude, latitude, color);
-            graphicsLayerRef.current.add(pointGraphic);
+            // const pointGraphic = createPointGraphic(longitude, latitude, color);
+            const pointGraphic = createPointGraphic(longitude, latitude, color, [0, 0, 0], 1.5, location);
+            // Creează bufferul invizibil
+            const bufferGraphic = createBufferGraphic(longitude, latitude, 500, location);
+
+            // Adaugă punctul și bufferul în GraphicsLayer
+            if (pointGraphic) graphicsLayerRef.current.add(pointGraphic);
+            if (bufferGraphic) graphicsLayerRef.current.add(bufferGraphic);
+
         });
     };
 
@@ -254,8 +340,13 @@ const App = () => {
                     currentGraphics.delete(location.id);
                 } else {
                     // Adăugăm un punct nou dacă nu există
-                    const pointGraphic = createPointGraphic(longitude, latitude, color);
+                    // const pointGraphic = createPointGraphic(longitude, latitude, color);
+
+                    const pointGraphic = createPointGraphic(longitude, latitude, color, [0, 0, 0], 1.5, location);
+                    const bufferGraphic = createBufferGraphic(longitude, latitude, 500, location);
+
                     graphicsLayerRef.current.add(pointGraphic);
+                    graphicsLayerRef.current.add(bufferGraphic);
                 }
             }
 
@@ -277,11 +368,12 @@ const App = () => {
     };
 
 
+
     const updateUserLocation = (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
-        console.log(`Updated location: ${latitude}, ${longitude}`);
+        //console.log(`Updated location: ${latitude}, ${longitude}`);
         setUserLocation({
             latitude,
             longitude,
@@ -295,10 +387,10 @@ const App = () => {
         });
 
         if (userLocationGraphicRef.current) {
-            console.log("Updating existing user location graphic.");
+            //console.log("Updating existing user location graphic.");
             userLocationGraphicRef.current.geometry = userLocationPoint;
         } else {
-            console.log("Creating a new user location graphic.");
+            //console.log("Creating a new user location graphic.");
             const userGraphic = new Graphic({
                 geometry: userLocationPoint,
                 symbol: new SimpleMarkerSymbol({
@@ -325,7 +417,7 @@ const App = () => {
 
 
     const trackUserLocation = (graphicsLayer) => {
-        console.log("Starting to track user location...");
+        //console.log("Starting to track user location...");
 
         const updateUserLocationWrapper = (position) => {
             try {
@@ -350,12 +442,12 @@ const App = () => {
         );
 
         return () => {
-            console.log("Stopping location tracking.");
+            //console.log("Stopping location tracking.");
             navigator.geolocation.clearWatch(watchId);
 
             if (userLocationGraphicRef.current && graphicsLayerRef.current) {
                 graphicsLayerRef.current.remove(userLocationGraphicRef.current);
-                console.log("Removed user location graphic from graphics layer.");
+                //console.log("Removed user location graphic from graphics layer.");
             }
         };
     };
@@ -375,7 +467,7 @@ const App = () => {
             graphicsLayerRef.current.add(userLocationGraphic);
         }
 
-        console.log("Filtered points removed from the map.");
+        //console.log("Filtered points removed from the map.");
     };
 
     async function filterLocations(userLocation, locations, radius) {
@@ -425,10 +517,10 @@ const App = () => {
             const distanceInMeters = geometryEngine.distance(projectedUserLocation, projectedLocation, "meters");
             const distanceInKilometers = distanceInMeters / 1000;
 
-            console.log(`Distance to ${location.name}: ${distanceInKilometers.toFixed(2)} km`);
+            //console.log(`Distance to ${location.name}: ${distanceInKilometers.toFixed(2)} km`);
 
             if (distanceInKilometers <= radius) {
-                console.log(`${location.name} is within the range of ${radius} km`);
+                //console.log(`${location.name} is within the range of ${radius} km`);
 
                 // Add a point with a bold contour for locations within the range
                 const pointGraphic = createPointGraphic(
@@ -574,6 +666,45 @@ const App = () => {
                     ref={mapRef}
                     style={{ flex: "2", height: "100%", position: "relative" }}
                 >
+
+                    {/* Pop-up */}
+                    {selectedLocation &&
+                        ReactDOM.createPortal(
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    top: "20%",
+                                    left: "50%",
+                                    transform: "translate(-50%, -50%)",
+                                    backgroundColor: "white",
+                                    padding: "20px",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                                    borderRadius: "8px",
+                                    zIndex: 10,
+                                }}
+                            >
+                                <h3>Location Details</h3>
+                                <p><strong>Name:</strong> {selectedLocation.name}</p>
+                                <p><strong>ID:</strong> {selectedLocation.id}</p>
+                                <button
+                                    onClick={() => setSelectedLocation(null)}
+                                    style={{
+                                        marginTop: "10px",
+                                        padding: "10px 20px",
+                                        backgroundColor: "#007BFF",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Close
+                                </button>
+                            </div>,
+                            document.getElementById("popup-container")
+                        )}
+
+
                     {/* Filter Box */}
                     <div
                         style={{
@@ -611,7 +742,7 @@ const App = () => {
 
                                 if (userLocation && locations.length > 0) {
                                     const filtered = filterLocations(userLocation, locations, radius);
-                                    console.log("Filtered locations:", filtered);
+                                    //console.log("Filtered locations:", filtered);
                                 } else {
                                     console.error("User location or locations data is missing.");
                                     alert("Please ensure user location and locations data are available.");
@@ -667,7 +798,7 @@ const App = () => {
                             title="Center on user location"
                             onClick={() => {
                                 if (userLocation) {
-                                    console.log("Focusing on user location:", userLocation);
+                                    //console.log("Focusing on user location:", userLocation);
                                     setShouldCenterMap(true); // Activează centrarea
                                     viewRef.current
                                         .goTo({
