@@ -1,6 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import ScheduleMatch from "./ScheduleMatch";
 
+// Export fetchLocations function for reuse
+export const fetchLocations = async () => {
+  try {
+    const response = await fetch("http://localhost:8080/api/locations", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data; // Return the data for reuse
+  } catch (err) {
+    console.error("Fetch error:", err);
+    throw err; // Propagate error for error handling
+  }
+};
+
 const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
   const [locations, setLocations] = useState([]);
   const [matches, setMatches] = useState([]); // Store matches for the selected location
@@ -11,23 +32,13 @@ const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
   const listRef = useRef(null); // Reference to the locations list
 
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchAndSetLocations = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/locations", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setLocations(data);
+        const locationsData = await fetchLocations(); // Call the exported fetchLocations function
+        setLocations(locationsData);
 
         if (onLocationsFetched) {
-          onLocationsFetched(data);
+          onLocationsFetched(locationsData);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -35,7 +46,7 @@ const LocationList = ({ onLocationsFetched, tabLineRef, setActiveTab }) => {
       }
     };
 
-    fetchLocations();
+    fetchAndSetLocations();
   }, [onLocationsFetched]);
 
   const handleLocationClick = async (location) => {
