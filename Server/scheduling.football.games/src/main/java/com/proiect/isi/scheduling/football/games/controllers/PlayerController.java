@@ -36,12 +36,11 @@ public class PlayerController {
                 .build();
     }
 
-    @GetMapping("/players/{playerId}")
-    public ResponseEntity<?> getPlayers(@PathVariable UUID playerId,
-                                        @CookieValue(name = "AuthToken") String cookie){
+    @GetMapping("/players/profile")
+    public ResponseEntity<?> getProfile(@CookieValue(name = "AuthToken") String cookie){
 
-        if(cookie.equals("Admin") || authService.checkPlayerCredentials(cookie)) {
-            PlayerDto player = playerService.getPlayerById(playerId);
+        if(authService.checkPlayerCredentials(cookie)) {
+            PlayerDto player = playerService.getPlayerById(UUID.fromString(cookie));
 
             return ResponseEntity
                     .status(HttpStatus.OK)
