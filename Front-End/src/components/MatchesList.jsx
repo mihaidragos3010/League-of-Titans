@@ -109,7 +109,6 @@ const MatchesList = ({ filterLocationId, onFiltersApplied, locations }) => {
             >
                 {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
-
             {/* Filter Selection Box */}
             {showFilters && (
                 <div style={{ marginBottom: "20px" }}>

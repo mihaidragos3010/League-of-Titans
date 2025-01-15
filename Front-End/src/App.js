@@ -176,9 +176,7 @@ const App = () => {
     };
 
 
-
-
-    const handleLocationsFetched = async (locations) => {
+    const handleLocationsFetched = async (fetchedLocations) => {
         if (!graphicsLayerRef.current) {
             console.error("GraphicsLayer is not initialized.");
             return;
@@ -191,7 +189,7 @@ const App = () => {
         try {
             const matches = await fetchMatches();
 
-            for (const location of locations) {
+            for (const location of fetchedLocations) {
                 const longitude = parseFloat(location.longitude);
                 const latitude = parseFloat(location.latitude);
 
@@ -222,6 +220,9 @@ const App = () => {
                 graphicsLayerRef.current.add(pointGraphic);
             }
 
+            // Actualizează locațiile în state pentru a le partaja cu MatchesList
+            setLocations(fetchedLocations);
+
             // Re-adaugă locația utilizatorului la sfârșitul procesului
             if (userLocationGraphic) {
                 graphicsLayerRef.current.add(userLocationGraphic);
@@ -230,9 +231,6 @@ const App = () => {
             console.error("Error fetching matches or processing locations:", error);
         }
     };
-
-
-
 
     const updateUserLocation = (position) => {
         const latitude = position.coords.latitude;
