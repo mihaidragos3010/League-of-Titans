@@ -124,10 +124,17 @@ const App = () => {
     }, [isLoggedIn]);
 
     // MAP FUNCTIONS
-    const handleFiltersApplied = (filteredMatches) => {
+    const handleFiltersApplied = async (filteredMatches) => {
         if (!graphicsLayerRef.current) {
             console.error("GraphicsLayer is not initialized.");
             return;
+        }
+
+        const userLocationGraphic = userLocationGraphicRef.current;
+        graphicsLayerRef.current.removeAll();
+
+        if (userLocationGraphic) {
+            graphicsLayerRef.current.add(userLocationGraphic);
         }
 
         const locationsMap = locations.reduce((acc, loc) => {
@@ -135,50 +142,48 @@ const App = () => {
             return acc;
         }, {});
 
-        if (!filteredMatches || filteredMatches.length === 0) {
-            console.warn("No matches found. Displaying all locations.");
-            locations.forEach((loc) => {
-                const { longitude, latitude } = loc;
-                if (longitude && latitude) {
-                    const pointGraphic = createPointGraphic(
-                        parseFloat(longitude),
-                        parseFloat(latitude),
-                        OCCUPATION_STATUS_COLORS.AVAILABLE
-                    );
-                    graphicsLayerRef.current.add(pointGraphic);
-                }
-            });
-            return;
-        }
+        // Creează un set pentru locațiile care au meciuri
+        const locationsWithMatches = new Set(filteredMatches.map((match) => match.match.locationId));
 
-        filteredMatches.forEach((match) => {
-            const location = locationsMap[match.match.locationId];
-            if (location) {
-                const { longitude, latitude } = location;
-                if (longitude && latitude) {
-                    let color = OCCUPATION_STATUS_COLORS.AVAILABLE;
-                    const totalPlayers = match.nr_team1_players + match.nr_team2_players;
-                    const maxPlayers = match.team1.maxPlayers + match.team2.maxPlayers;
-                    if (totalPlayers === maxPlayers) {
-                        color = OCCUPATION_STATUS_COLORS.OCCUPIED;
-                    } else if (totalPlayers > 0) {
-                        color = OCCUPATION_STATUS_COLORS.WAITING;
-                    }
-                    const pointGraphic = createPointGraphic(
-                        parseFloat(longitude),
-                        parseFloat(latitude),
-                        color
-                    );
-                    graphicsLayerRef.current.add(pointGraphic);
+        // Parcurge toate locațiile și actualizează culorile
+        locations.forEach((location) => {
+            const longitude = parseFloat(location.longitude);
+            const latitude = parseFloat(location.latitude);
+
+            if (isNaN(longitude) || isNaN(latitude)) {
+                console.warn("Skipping location with invalid coordinates:", location);
+                return;
+            }
+
+            let color = OCCUPATION_STATUS_COLORS.AVAILABLE; // Implicit, verde
+            if (locationsWithMatches.has(location.id)) {
+                const filteredLocationMatches = filteredMatches.filter(
+                    (match) => match.match.locationId === location.id
+                );
+
+                const totalPlayers = filteredLocationMatches.reduce(
+                    (sum, match) => sum + match.nr_team1_players + match.nr_team2_players,
+                    0
+                );
+                const maxPlayers = filteredLocationMatches.reduce(
+                    (sum, match) => sum + match.team1.maxPlayers + match.team2.maxPlayers,
+                    0
+                );
+
+                if (totalPlayers === maxPlayers) {
+                    color = OCCUPATION_STATUS_COLORS.OCCUPIED;
+                } else if (totalPlayers > 0) {
+                    color = OCCUPATION_STATUS_COLORS.WAITING;
                 }
             }
+
+            const pointGraphic = createPointGraphic(longitude, latitude, color);
+            graphicsLayerRef.current.add(pointGraphic);
         });
     };
 
 
-
-
-    const handleLocationsFetched = async (locations) => {
+    const handleLocationsFetched = async (fetchedLocations) => {
         if (!graphicsLayerRef.current) {
             console.error("GraphicsLayer is not initialized.");
             return;
@@ -191,7 +196,7 @@ const App = () => {
         try {
             const matches = await fetchMatches();
 
-            for (const location of locations) {
+            for (const location of fetchedLocations) {
                 const longitude = parseFloat(location.longitude);
                 const latitude = parseFloat(location.latitude);
 
@@ -222,6 +227,9 @@ const App = () => {
                 graphicsLayerRef.current.add(pointGraphic);
             }
 
+            // Actualizează locațiile în state pentru a le partaja cu MatchesList
+            setLocations(fetchedLocations);
+
             // Re-adaugă locația utilizatorului la sfârșitul procesului
             if (userLocationGraphic) {
                 graphicsLayerRef.current.add(userLocationGraphic);
@@ -230,9 +238,6 @@ const App = () => {
             console.error("Error fetching matches or processing locations:", error);
         }
     };
-
-
-
 
     const updateUserLocation = (position) => {
         const latitude = position.coords.latitude;
