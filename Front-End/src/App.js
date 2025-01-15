@@ -13,7 +13,10 @@ import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import Point from "@arcgis/core/geometry/Point";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
 import "@arcgis/core/assets/esri/themes/light/main.css";
-import { distance, union } from "@arcgis/core/geometry/geometryEngine";
+// import { distance, union } from "@arcgis/core/geometry/geometryEngine";
+import { project, load } from "@arcgis/core/geometry/projection";
+import * as geometryEngine from "@arcgis/core/geometry/geometryEngine";
+import SpatialReference from "@arcgis/core/geometry/SpatialReference";
 import Profile from "./components/Profile";
 
 import { fetchMatches, applyFilters } from "./components/MatchesList"; // Asigură-te că exporturile sunt disponibile
@@ -57,7 +60,7 @@ const App = () => {
     esriConfig.apiKey =
         "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h";
 
-    const createPointGraphic = (longitude, latitude, color = [255, 0, 0]) => {
+    const createPointGraphic = (longitude, latitude, color = [255, 0, 0], outlineColor = [0, 0, 0], outlineWidth = 1.5) => {
         const point = new Point({
             longitude: longitude,
             latitude: latitude,
@@ -67,8 +70,8 @@ const App = () => {
             color: color,
             size: 14,
             outline: {
-                color: "black",
-                width: 1.5,
+                color: outlineColor,
+                width: outlineWidth,
             },
         });
 
@@ -77,6 +80,7 @@ const App = () => {
             symbol: symbol,
         });
     };
+
 
     // esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h"
 
@@ -278,7 +282,11 @@ const App = () => {
         const longitude = position.coords.longitude;
 
         console.log(`Updated location: ${latitude}, ${longitude}`);
-        setUserLocation({ latitude, longitude });
+        setUserLocation({
+            latitude,
+            longitude,
+            spatialReference: { wkid: 4326 }, // Add spatial reference
+        });
 
         const userLocationPoint = new Point({
             longitude: longitude,
@@ -302,7 +310,6 @@ const App = () => {
             userLocationGraphicRef.current = userGraphic;
         }
 
-        // Adaugă locația utilizatorului pe hartă
         if (graphicsLayerRef.current) {
             graphicsLayerRef.current.add(userLocationGraphicRef.current);
         }
@@ -311,12 +318,11 @@ const App = () => {
             viewRef.current
                 .goTo([longitude, latitude], { zoom: 15 })
                 .then(() => console.log("Map centered on user location."))
-                .catch((error) =>
-                    console.error("Error centering on user location:", error)
-                );
+                .catch((error) => console.error("Error centering on user location:", error));
             setShouldCenterMap(false);
         }
     };
+
 
     const trackUserLocation = (graphicsLayer) => {
         console.log("Starting to track user location...");
@@ -354,61 +360,107 @@ const App = () => {
         };
     };
 
-    const filterLocations = () => {
-        console.log("Filter button clicked!");
 
-        if (!graphicsLayerRef.current || !viewRef.current) {
-            console.error("GraphicsLayer or View is not initialized.");
+    const clearFilteredPoints = () => {
+        if (!graphicsLayerRef.current) {
+            console.error("GraphicsLayer is not initialized.");
             return;
         }
 
+        // Preserve the user's location graphic
         const userLocationGraphic = userLocationGraphicRef.current;
+        graphicsLayerRef.current.removeAll();
 
-        if (!userLocationGraphic) {
-            console.error("User location not found.");
-            return;
+        if (userLocationGraphic) {
+            graphicsLayerRef.current.add(userLocationGraphic);
         }
 
-        const userLocationGeometry = userLocationGraphic.geometry;
+        console.log("Filtered points removed from the map.");
+    };
 
-        graphicsLayerRef.current.graphics.items.forEach((graphic) => {
-            if (graphic === userLocationGraphic) return;
+    async function filterLocations(userLocation, locations, radius) {
+        if (!locations || locations.length === 0) {
+            console.error("No locations available to filter.");
+            return [];
+        }
 
-            if (
-                graphic.geometry.spatialReference.wkid !==
-                userLocationGeometry.spatialReference.wkid
-            ) {
-                console.warn("Spatial references do not match. Skipping graphic.");
-                return;
+        if (!userLocation || !userLocation.spatialReference) {
+            console.error("User location is missing spatial reference.");
+            return [];
+        }
+
+        await load(); // Ensure the projection module is loaded
+
+        const webMercatorSR = new SpatialReference({ wkid: 3857 });
+        const projectedUserLocation = project(
+            new Point({
+                longitude: userLocation.longitude,
+                latitude: userLocation.latitude,
+                spatialReference: userLocation.spatialReference,
+            }),
+            webMercatorSR
+        );
+
+        return locations.filter((location) => {
+            if (!location.geometry && location.longitude && location.latitude) {
+                location.geometry = {
+                    type: "point",
+                    x: location.longitude,
+                    y: location.latitude,
+                    spatialReference: { wkid: 4326 },
+                };
             }
 
-            const distanceToUser = distance(
-                userLocationGeometry,
-                graphic.geometry,
-                "kilometers"
-            );
+            if (!location.geometry) {
+                console.warn("Skipping location with missing geometry or coordinates:", location);
+                return false;
+            }
 
-            if (distanceToUser <= radius) {
-                graphic.symbol = new SimpleMarkerSymbol({
-                    color: [0, 255, 0], // Green for within radius
-                    size: 14,
-                    outline: {
-                        color: [255, 255, 255],
-                        width: 2,
-                    },
-                });
+            const projectedLocation = project(location.geometry, webMercatorSR);
+            if (!projectedLocation) {
+                console.warn("Projection failed for location:", location);
+                return false;
+            }
+
+            const distanceInMeters = geometryEngine.distance(projectedUserLocation, projectedLocation, "meters");
+            const distanceInKilometers = distanceInMeters / 1000;
+
+            console.log(`Distance to ${location.name}: ${distanceInKilometers.toFixed(2)} km`);
+
+            if (distanceInKilometers <= radius) {
+                console.log(`${location.name} is within the range of ${radius} km`);
+
+                // Add a point with a bold contour for locations within the range
+                const pointGraphic = createPointGraphic(
+                    location.geometry.x,
+                    location.geometry.y,
+                    [0, 255, 0],    // Green fill color
+                    [40, 90, 255],    // Blue outline
+                    8               // Thicker outline
+                );
+
+                graphicsLayerRef.current.add(pointGraphic);
+
+                return true;
             } else {
-                graphic.symbol = new SimpleMarkerSymbol({
-                    color: [255, 0, 0], // Red for outside radius
-                    size: 14,
-                    outline: {
-                        color: [0, 0, 0],
-                        width: 1,
-                    },
-                });
+                // Add a regular point for locations outside the range
+                const pointGraphic = createPointGraphic(
+                    location.geometry.x,
+                    location.geometry.y,
+                    [255, 0, 0],    // Red fill color
+                    [0, 0, 0],      // Black outline
+                    1.5             // Standard outline
+                );
+
+                graphicsLayerRef.current.add(pointGraphic);
+
+                return false;
             }
         });
-    };
+    }
+
+
+
 
     // RENDER FUNCTIONS
 
@@ -523,7 +575,7 @@ const App = () => {
                     style={{ flex: "2", height: "100%", position: "relative" }}
                 >
                     {/* Filter Box */}
-                    {/* <div
+                    <div
                         style={{
                             position: "absolute",
                             bottom: "10px",
@@ -554,7 +606,17 @@ const App = () => {
                             placeholder="Radius (km)"
                         />
                         <button
-                            onClick={filterLocations}
+                            onClick={() => {
+                                clearFilteredPoints(); // Clear existing filtered points before adding new ones
+
+                                if (userLocation && locations.length > 0) {
+                                    const filtered = filterLocations(userLocation, locations, radius);
+                                    console.log("Filtered locations:", filtered);
+                                } else {
+                                    console.error("User location or locations data is missing.");
+                                    alert("Please ensure user location and locations data are available.");
+                                }
+                            }}
                             style={{
                                 padding: "8px 12px",
                                 backgroundColor: "#007BFF",
@@ -568,7 +630,23 @@ const App = () => {
                             Filter
                         </button>
 
-                    </div> */}
+                        <button
+                            onClick={clearFilteredPoints}
+                            style={{
+                                padding: "8px 12px",
+                                backgroundColor: "#FF4136", // Red color for the remove button
+                                color: "#fff",
+                                border: "none",
+                                cursor: "pointer",
+                                borderRadius: "4px",
+                                width: "100%",
+                                marginTop: "10px", // Add spacing above the button
+                            }}
+                        >
+                            Remove Filtered Points
+                        </button>
+                    </div>
+
 
                     {/* Zoom Buttons */}
                     <div
