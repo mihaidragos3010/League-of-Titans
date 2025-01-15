@@ -131,10 +131,14 @@ const App = () => {
         }
 
         const userLocationGraphic = userLocationGraphicRef.current;
-        graphicsLayerRef.current.removeAll();
 
+        // Păstrează userLocationGraphic și elimină toate celelalte
         if (userLocationGraphic) {
-            graphicsLayerRef.current.add(userLocationGraphic);
+            graphicsLayerRef.current.graphics = graphicsLayerRef.current.graphics.filter(
+                (graphic) => graphic === userLocationGraphic
+            );
+        } else {
+            graphicsLayerRef.current.removeAll();
         }
 
         const locationsMap = locations.reduce((acc, loc) => {
@@ -252,9 +256,9 @@ const App = () => {
             }
 
             // Eliminăm punctele care nu mai sunt relevante
-            currentGraphics.forEach((graphic, locationId) => {
-                graphicsLayerRef.current.remove(graphic);
-            });
+            // currentGraphics.forEach((graphic, locationId) => {
+            //     graphicsLayerRef.current.remove(graphic);
+            // });
 
             // Actualizează locațiile în state pentru a le partaja cu MatchesList
             setLocations(fetchedLocations);
