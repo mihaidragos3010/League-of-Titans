@@ -269,7 +269,6 @@ const App = () => {
     };
 
 
-
     const updateUserLocation = (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
