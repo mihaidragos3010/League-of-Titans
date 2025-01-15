@@ -93,6 +93,8 @@ const MatchesList = ({ filterLocationId, onFiltersApplied, locations }) => {
         <div style={{ padding: "20px" }}>
             <h1>Matches List</h1>
             {error && <p style={{ color: "red" }}>{error}</p>}
+
+            {/* Show/Hide Filters */}
             <button
                 onClick={() => setShowFilters(!showFilters)}
                 style={{
@@ -107,6 +109,8 @@ const MatchesList = ({ filterLocationId, onFiltersApplied, locations }) => {
             >
                 {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
+
+            {/* Filter Selection Box */}
             {showFilters && (
                 <div style={{ marginBottom: "20px" }}>
                     <label>Filter by Location ID:</label>

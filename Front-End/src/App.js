@@ -50,7 +50,7 @@ const App = () => {
     const [shouldCenterMap, setShouldCenterMap] = useState(false);
 
     const userLocationGraphicRef = useRef(null);
-    
+
     const [locations, setLocations] = useState([]);
 
     esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h";
@@ -129,12 +129,12 @@ const App = () => {
             console.error("GraphicsLayer is not initialized.");
             return;
         }
-    
+
         const locationsMap = locations.reduce((acc, loc) => {
             acc[loc.id] = loc;
             return acc;
         }, {});
-    
+
         if (!filteredMatches || filteredMatches.length === 0) {
             console.warn("No matches found. Displaying all locations.");
             locations.forEach((loc) => {
@@ -150,7 +150,7 @@ const App = () => {
             });
             return;
         }
-    
+
         filteredMatches.forEach((match) => {
             const location = locationsMap[match.match.locationId];
             if (location) {
@@ -158,7 +158,8 @@ const App = () => {
                 if (longitude && latitude) {
                     let color = OCCUPATION_STATUS_COLORS.AVAILABLE;
                     const totalPlayers = match.nr_team1_players + match.nr_team2_players;
-                    if (totalPlayers === match.team1.maxPlayers + match.team2.maxPlayers) {
+                    const maxPlayers = match.team1.maxPlayers + match.team2.maxPlayers;
+                    if (totalPlayers === maxPlayers) {
                         color = OCCUPATION_STATUS_COLORS.OCCUPIED;
                     } else if (totalPlayers > 0) {
                         color = OCCUPATION_STATUS_COLORS.WAITING;
@@ -173,7 +174,7 @@ const App = () => {
             }
         });
     };
-    
+
 
 
 
