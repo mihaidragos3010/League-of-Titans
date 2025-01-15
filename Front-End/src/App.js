@@ -259,7 +259,7 @@ const App = () => {
 
                 if (totalPlayers === maxPlayers) {
                     color = OCCUPATION_STATUS_COLORS.OCCUPIED;
-                } else if (totalPlayers > 0) {
+                } else {
                     color = OCCUPATION_STATUS_COLORS.WAITING;
                 }
             }
@@ -588,7 +588,7 @@ const App = () => {
                             background: "#f8f9fa",
                         }}
                     >
-                        <h1>Welcome, {user?.name || "User"}</h1>
+                        <h1>Titan si prietenii</h1>
                         <button
                             onClick={handleLogout}
                             style={{
