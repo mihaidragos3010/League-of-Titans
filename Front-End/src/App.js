@@ -50,6 +50,8 @@ const App = () => {
     const [shouldCenterMap, setShouldCenterMap] = useState(false);
 
     const userLocationGraphicRef = useRef(null);
+    
+    const [locations, setLocations] = useState([]);
 
     esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurIeLEqyeZ51opCd1uf2DV8q1ZQ97sld5RzhQfBQ4aenHPGnY53eFIwzjIqjRmELP1DIUHq1mtOxRFE6mO__2UbGjwoNrSm0HH0Wbms9nRYDy5qM3Ksfs7Dh265Uzd6fDHOSnJJlRGY_Cu9YkibhlQb82HJFmrIC5jnMwbGkKK4LQ_EOHCxmLvRxB4Ww9pXg7Si9iFLeny9HdI1_XhvyEJ2c.AT1_zAYPwv8h";
 
@@ -121,41 +123,58 @@ const App = () => {
         }
     }, [isLoggedIn]);
 
-
-
     // MAP FUNCTIONS
-
     const handleFiltersApplied = (filteredMatches) => {
         if (!graphicsLayerRef.current) {
             console.error("GraphicsLayer is not initialized.");
             return;
         }
-
-        graphicsLayerRef.current.removeAll();
-
-        for (const match of filteredMatches) {
-            const locationId = match.match.locationId;
-            const longitude = parseFloat(match.match.longitude);
-            const latitude = parseFloat(match.match.latitude);
-
-            if (isNaN(longitude) || isNaN(latitude)) {
-                console.error("Invalid coordinates for match:", match);
-                continue;
-            }
-
-            let color = OCCUPATION_STATUS_COLORS.AVAILABLE;
-
-            const totalPlayers = match.nr_team1_players + match.nr_team2_players;
-            if (totalPlayers === match.team1.maxPlayers + match.team2.maxPlayers) {
-                color = OCCUPATION_STATUS_COLORS.OCCUPIED;
-            } else if (totalPlayers > 0) {
-                color = OCCUPATION_STATUS_COLORS.WAITING;
-            }
-
-            const pointGraphic = createPointGraphic(longitude, latitude, color);
-            graphicsLayerRef.current.add(pointGraphic);
+    
+        const locationsMap = locations.reduce((acc, loc) => {
+            acc[loc.id] = loc;
+            return acc;
+        }, {});
+    
+        if (!filteredMatches || filteredMatches.length === 0) {
+            console.warn("No matches found. Displaying all locations.");
+            locations.forEach((loc) => {
+                const { longitude, latitude } = loc;
+                if (longitude && latitude) {
+                    const pointGraphic = createPointGraphic(
+                        parseFloat(longitude),
+                        parseFloat(latitude),
+                        OCCUPATION_STATUS_COLORS.AVAILABLE
+                    );
+                    graphicsLayerRef.current.add(pointGraphic);
+                }
+            });
+            return;
         }
+    
+        filteredMatches.forEach((match) => {
+            const location = locationsMap[match.match.locationId];
+            if (location) {
+                const { longitude, latitude } = location;
+                if (longitude && latitude) {
+                    let color = OCCUPATION_STATUS_COLORS.AVAILABLE;
+                    const totalPlayers = match.nr_team1_players + match.nr_team2_players;
+                    if (totalPlayers === match.team1.maxPlayers + match.team2.maxPlayers) {
+                        color = OCCUPATION_STATUS_COLORS.OCCUPIED;
+                    } else if (totalPlayers > 0) {
+                        color = OCCUPATION_STATUS_COLORS.WAITING;
+                    }
+                    const pointGraphic = createPointGraphic(
+                        parseFloat(longitude),
+                        parseFloat(latitude),
+                        color
+                    );
+                    graphicsLayerRef.current.add(pointGraphic);
+                }
+            }
+        });
     };
+    
+
 
 
     const handleLocationsFetched = async (locations) => {
@@ -164,15 +183,11 @@ const App = () => {
             return;
         }
 
-        // Ștergem toate punctele existente, dar păstrăm graficul locației utilizatorului
+        // Ștergem toate graficele, dar păstrăm locația utilizatorului
         const userLocationGraphic = userLocationGraphicRef.current;
         graphicsLayerRef.current.removeAll();
-        if (userLocationGraphic) {
-            graphicsLayerRef.current.add(userLocationGraphic);
-        }
 
         try {
-            // Obține toate meciurile folosind fetchMatches
             const matches = await fetchMatches();
 
             for (const location of locations) {
@@ -184,15 +199,8 @@ const App = () => {
                     continue;
                 }
 
-                // Aplicăm filtrul pentru locația curentă
                 const filteredMatches = applyFilters(matches, { locationId: location.id });
 
-                console.log(
-                    `Filtered Matches for Location ${location.id}:`,
-                    filteredMatches
-                );
-
-                // Determinăm statusul locației
                 let color = OCCUPATION_STATUS_COLORS.AVAILABLE;
 
                 if (filteredMatches.length === 0) {
@@ -201,7 +209,7 @@ const App = () => {
                     filteredMatches.some((match) => {
                         const totalPlayers =
                             match.nr_team1_players + match.nr_team2_players;
-                        return totalPlayers === 6 * 2;
+                        return totalPlayers === match.team1.maxPlayers + match.team2.maxPlayers;
                     })
                 ) {
                     color = OCCUPATION_STATUS_COLORS.OCCUPIED;
@@ -209,16 +217,19 @@ const App = () => {
                     color = OCCUPATION_STATUS_COLORS.WAITING;
                 }
 
-                console.log(`Assigned Color for Location ID ${location.id}: ${color}`);
-
-                // Adaugă graficul pe hartă
                 const pointGraphic = createPointGraphic(longitude, latitude, color);
                 graphicsLayerRef.current.add(pointGraphic);
+            }
+
+            // Re-adaugă locația utilizatorului la sfârșitul procesului
+            if (userLocationGraphic) {
+                graphicsLayerRef.current.add(userLocationGraphic);
             }
         } catch (error) {
             console.error("Error fetching matches or processing locations:", error);
         }
     };
+
 
 
 
@@ -249,14 +260,20 @@ const App = () => {
                 }),
             });
             userLocationGraphicRef.current = userGraphic;
-            graphicsLayerRef.current.add(userGraphic);
+        }
+
+        // Adaugă locația utilizatorului pe hartă
+        if (graphicsLayerRef.current) {
+            graphicsLayerRef.current.add(userLocationGraphicRef.current);
         }
 
         if (shouldCenterMap && viewRef.current) {
             viewRef.current
                 .goTo([longitude, latitude], { zoom: 15 })
                 .then(() => console.log("Map centered on user location."))
-                .catch((error) => console.error("Error centering on user location:", error));
+                .catch((error) =>
+                    console.error("Error centering on user location:", error)
+                );
             setShouldCenterMap(false);
         }
     };
@@ -267,7 +284,7 @@ const App = () => {
 
         const updateUserLocationWrapper = (position) => {
             try {
-                updateUserLocation(position); // Apelăm funcția de mai sus pentru actualizare
+                updateUserLocation(position); // Actualizăm locația
             } catch (error) {
                 console.error("Error in updateUserLocation:", error);
             }
@@ -291,13 +308,13 @@ const App = () => {
             console.log("Stopping location tracking.");
             navigator.geolocation.clearWatch(watchId);
 
-            // Eliminăm graficul locației utilizatorului dacă este setat
             if (userLocationGraphicRef.current && graphicsLayerRef.current) {
                 graphicsLayerRef.current.remove(userLocationGraphicRef.current);
                 console.log("Removed user location graphic from graphics layer.");
             }
         };
     };
+
 
 
 
@@ -452,7 +469,8 @@ const App = () => {
                         {activeTab === "matches" && (
                             <MatchesList
                                 filterLocationId={localStorage.getItem("filterLocationId")}
-                                onFiltersApplied={handleFiltersApplied} // Noua funcție
+                                onFiltersApplied={handleFiltersApplied}
+                                locations={locations}
                             />
 
                         )}
